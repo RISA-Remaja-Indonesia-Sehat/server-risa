@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("SUPABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Models
+model Users {
+  id              Int               @id @default(autoincrement())
+  name            String
+  email           String            @unique
+  password        String   
+  stickers        Int               @default(0)
+  createdAt       DateTime          @default(now())
+  comments        Comment[]
+  bookingVaccines Booking_Vaccine[]
+  missionLogs     Mission_Log[]
+  voucherClaims   Voucher_Claim[]
+}
+
+model Articles {
+  id        Int       @id @default(autoincrement())
+  title     String
+  imageUrl  String
+  content   String    @db.Text  // HTML content
+  opinion   String    @db.Text  // HTML opinion
+  createdAt DateTime  @default(now())
+  comments  Comment[]
+}
+
+model Comment {
+  id         Int      @id @default(autoincrement())
+  comment    String
+  user_id    Int
+  article_id Int
+  createdAt  DateTime @default(now())
+  user       Users    @relation(fields: [user_id], references: [id])
+  article    Articles @relation(fields: [article_id], references: [id])
+}
+
+model Labs {
+  id              Int               @id @default(autoincrement())
+  name            String
+  address         String
+  city            String 
+  phone           String
+  latitude        Float
+  longitude       Float
+  bookingVaccines Booking_Vaccine[]
+}
+
+model Vaccine_Types {
+  id              Int               @id @default(autoincrement())
+  name            String
+  price           String
+  description     String
+  bookingVaccines Booking_Vaccine[]
+}
+
+model Booking_Vaccine {
+  id         Int      @id @default(autoincrement())
+  nik        Int
+  user_id    Int
+  age        Int
+  gender     String
+  lab_id     Int
+  vaccine_id Int
+  date_time  DateTime
+  user       Users    @relation(fields: [user_id], references: [id])
+  lab        Labs     @relation(fields: [lab_id], references: [id])
+  vaccine    Vaccine_Types    @relation(fields: [vaccine_id], references: [id])
+}
+
+model Mission {
+  id             Int           @id @default(autoincrement())
+  title          String
+  targetCount    Int
+  rewardStickers Int
+  missionLogs    Mission_Log[]
+}
+
+model Mission_Log {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  mission_id Int
+  isComplete Boolean
+  completedAt DateTime @default(now())
+  user       Users    @relation(fields: [user_id], references: [id])
+  mission    Mission    @relation(fields: [mission_id], references: [id])
+}
+
+model Voucher {
+  id            Int             @id @default(autoincrement())
+  title         String
+  cost          Int
+  image         String
+  description   String
+  voucherClaims Voucher_Claim[]
+}
+
+model Voucher_Claim {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  voucher_id Int
+  claimedAt  DateTime @default(now())
+  user       Users    @relation(fields: [user_id], references: [id])
+  voucher    Voucher    @relation(fields: [voucher_id], references: [id])
+}
