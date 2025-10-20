@@ -1,8 +1,5 @@
 node_modules/
 .env
-.env.local
-.env.production
-.env.staging
-.vercel
+prisma/migrations/
 dist/
 build/
