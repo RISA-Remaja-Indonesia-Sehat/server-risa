@@ -26,6 +26,8 @@ model Articles {
   id        Int       @id @default(autoincrement())
   title     String
   imageUrl  String
+  imageAlt  String
+  description String
   content   String    @db.Text  // HTML content
   opinion   String    @db.Text  // HTML opinion
   createdAt DateTime  @default(now())
