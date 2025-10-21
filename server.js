@@ -1,10 +1,19 @@
 require('dotenv').config();
 
 const express = require('express');
+const cors = require('cors');
 const { prisma, connectMongoDB, testPrismaConnection } = require('./config/db');
 
 const app = express();
 const PORT = process.env.PORT;
+
+// CORS configuration
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://risa-v2.vercel.app'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use(express.json());
 
