@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getAllArticle, getArticleById, createArticle, updateArticle, deleteArticle } = require('../controllers/article.controller');
+const { getAllArticle, getArticleById, createArticle, updateArticle, deleteArticle } = require('../controllers/articles.controller');
 
 router.get('/', getAllArticle)
 router.get('/:id', getArticleById)
