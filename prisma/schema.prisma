@@ -50,7 +50,7 @@ model Labs {
   name            String
   address         String
   city            String 
-  phone           String
+  gmaps           String
   latitude        Float
   longitude       Float
   bookingVaccines Booking_Vaccine[]
