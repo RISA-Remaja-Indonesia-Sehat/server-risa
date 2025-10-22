@@ -31,6 +31,7 @@ model Articles {
   content   String    @db.Text  // HTML content
   opinion   String    @db.Text  // HTML opinion
   createdAt DateTime  @default(now())
+  tags      String
   comments  Comment[]
 }
 
