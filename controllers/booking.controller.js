@@ -72,7 +72,7 @@ module.exports = {
                     phone,
                     lab_id: lab.id,
                     vaccine_id: vaccine.id,
-                    date_time: new Date(appointmentDate)
+                    date_time: appointmentDate
                 },
                 include: {
                     user: { select: { id: true, name: true, email: true } },
