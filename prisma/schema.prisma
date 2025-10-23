@@ -66,13 +66,15 @@ model Vaccine_Types {
 
 model Booking_Vaccine {
   id         Int      @id @default(autoincrement())
-  nik        Int
+  nik        String   @unique
   user_id    Int
+  user_name  String
   age        Int
   gender     String
   lab_id     Int
   vaccine_id Int
   date_time  DateTime
+  createdAt  DateTime @default(now())
   user       Users    @relation(fields: [user_id], references: [id])
   lab        Labs     @relation(fields: [lab_id], references: [id])
   vaccine    Vaccine_Types    @relation(fields: [vaccine_id], references: [id])
