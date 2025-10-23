@@ -28,18 +28,59 @@ module.exports = {
 
     createBooking: async (req, res) => {
         try {
-            const { userId, nik, age, gender, labId, vaccineId, appointmentDate } = req.body;
+            // 1. Extract user_id dari JWT token
+            if (!req.user || !req.user.userId) {
+                return res.status(401).json({ message: 'User not authenticated' });
+            }
+            const userId = req.user.userId;
+            
+            // 2. Get user data untuk user_name
+            const user = await prisma.users.findUnique({
+                where: { id: userId },
+                select: { name: true }
+            });
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+            
+            const { nik, age, gender, phone, labName, vaccineName, appointmentDate } = req.body;
+            
+            // 3. Resolve lab_name → lab_id
+            const lab = await prisma.labs.findFirst({
+                where: { name: { contains: labName, mode: 'insensitive' } }
+            });
+            if (!lab) {
+                return res.status(404).json({ message: 'Lab not found' });
+            }
+            
+            // 4. Resolve vaccine_name → vaccine_id
+            const vaccine = await prisma.vaccine_Types.findFirst({
+                where: { name: { contains: vaccineName, mode: 'insensitive' } }
+            });
+            if (!vaccine) {
+                return res.status(404).json({ message: 'Vaccine not found' });
+            }
+            
+            // 5. Create booking
             const newBooking = await prisma.booking_Vaccine.create({
                 data: { 
-                    user_id: userId, 
+                    user_id: userId,
+                    user_name: user.name, // Nama saat booking
                     nik,
-                    age,
+                    age: parseInt(age),
                     gender,
-                    lab_id: labId,
-                    vaccine_id: vaccineId,
-                    date_time: appointmentDate 
+                    phone,
+                    lab_id: lab.id,
+                    vaccine_id: vaccine.id,
+                    date_time: new Date(appointmentDate)
+                },
+                include: {
+                    user: { select: { id: true, name: true, email: true } },
+                    lab: true,
+                    vaccine: true
                 }
             });
+            
             res.status(201).json({
                 message: 'Booking created successfully',
                 data: newBooking
