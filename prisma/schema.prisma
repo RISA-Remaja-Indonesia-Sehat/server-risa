@@ -65,8 +65,8 @@ model Vaccine_Types {
 }
 
 model Booking_Vaccine {
-  id         Int      @id @default(autoincrement())
-  nik        String   @unique
+  id         String      @id
+  nik        String   
   user_id    Int
   user_name  String
   age        Int
