@@ -21,16 +21,17 @@ module.exports = {
             }
             const userId = req.user.userId;
             
-            const { voucherId } = req.body;
+            const { voucher_id, voucherCode } = req.body;
             
-            if (!voucherId) {
+            if (!voucher_id) {
                 return res.status(400).json({ message: 'Voucher ID is required' });
             }
             
             const exchangeHistory = await prisma.voucher_Claim.create({
                 data: {
                     user_id: userId,
-                    voucher_id: parseInt(voucherId)
+                    voucher_id: parseInt(voucher_id),
+                    voucherCode: voucherCode
                 },
                 include: {
                     user: { select: { id: true, name: true } },

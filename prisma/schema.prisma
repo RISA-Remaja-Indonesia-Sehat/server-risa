@@ -112,6 +112,7 @@ model Voucher_Claim {
   id         Int      @id @default(autoincrement())
   user_id    Int
   voucher_id Int
+  voucherCode String
   claimedAt  DateTime @default(now())
   user       Users    @relation(fields: [user_id], references: [id])
   voucher    Voucher    @relation(fields: [voucher_id], references: [id])
