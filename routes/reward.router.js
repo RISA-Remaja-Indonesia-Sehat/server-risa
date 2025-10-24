@@ -4,7 +4,7 @@ const { getAllRewards, createExchangeHistory, getUserExchangeHistory } = require
 const { auth } = require('../middleware/auth');
 
 router.get('/', getAllRewards);                    
-router.post('/claim', auth, createExchangeHistory);
+router.post('/history', auth, createExchangeHistory);
 router.get('/history', auth, getUserExchangeHistory);
 
 module.exports = router;
