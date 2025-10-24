@@ -6,6 +6,7 @@ const commentRouter = require('./comment.router');
 const labsRouter = require('./labs.router');
 const vaccineRouter = require('./vaccine.router');
 const bookingRouter = require('./booking.router');
+const rewardRouter = require('./reward.router');
 
 // Handle article ID parameter
 router.param('id', (req, res, next, id) => {
@@ -19,5 +20,6 @@ router.use('/api/article', arrticleRouter);
 router.use('/api/labs', labsRouter);
 router.use('/api/vaccine', vaccineRouter);
 router.use('/api/booking', bookingRouter);
+router.use('/api/reward', rewardRouter);
 
 module.exports = router;

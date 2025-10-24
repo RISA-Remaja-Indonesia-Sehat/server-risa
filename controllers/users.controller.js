@@ -56,7 +56,7 @@ module.exports = {
                 return res.status(401).json({ message: 'Password Salah' });
             }
             
-            const payload = { userId: user.id, name: user.name };
+            const payload = { userId: user.id, name: user.name, stickers: user.stickers };
             const token = jwt.sign(
                 payload,
                 process.env.JWT_SECRET,
@@ -70,7 +70,8 @@ module.exports = {
                     user: {
                         id: user.id,
                         email: user.email,
-                        name: user.name
+                        name: user.name,
+                        stickers: user.stickers
                     }
                 }
             });
