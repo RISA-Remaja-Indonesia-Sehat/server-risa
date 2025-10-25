@@ -83,20 +83,28 @@ model Booking_Vaccine {
 
 model Mission {
   id             Int           @id @default(autoincrement())
-  title          String
-  targetCount    Int
-  rewardStickers Int
+  title          String        // "Baca Artikel", "Main Game", etc
+  icon           String        // URL icon
+  target         Int           // Target count (2, 1, 5, etc)
+  reward         Int           // Reward stickers (1, 2, etc)
   missionLogs    Mission_Log[]
 }
 
 model Mission_Log {
-  id         Int      @id @default(autoincrement())
-  user_id    Int
-  mission_id Int
-  isComplete Boolean
-  completedAt DateTime @default(now())
-  user       Users    @relation(fields: [user_id], references: [id])
-  mission    Mission    @relation(fields: [mission_id], references: [id])
+  id           String   @id @default(uuid())
+  user_id      Int
+  mission_id   Int
+  progress     Int      @default(0)     // Current progress (0, 1, 2, etc)
+  completed    Boolean  @default(false) // Mission completed status
+  status       String   @default("idle") // UI status: "idle", "in_progress", "completed" (sync dengan frontend)
+  claimedAt    DateTime? // When user claimed the reward
+  createdAt    DateTime @default(now())
+  missionDate  DateTime @default(now()) // Tanggal misi dimulai (untuk filter harian)
+  user         Users    @relation(fields: [user_id], references: [id])
+  mission      Mission  @relation(fields: [mission_id], references: [id])
+  
+  // Index untuk performa query harian
+  @@index([user_id, missionDate])
 }
 
 model Voucher {
