@@ -7,10 +7,12 @@ const getCurrentDateWIB = () => {
   now.setHours(now.getHours() + 7);
   return now;
 };
-// Utility: Get start of today in WIB
+// Utility: Get start of today in WIB (fix: reset time ke 00:00)
 const getTodayWIB = () => {
   const nowWIB = getCurrentDateWIB();
-  return new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate()); // Start of day in WIB
+  const today = new Date(nowWIB.getFullYear(), nowWIB.getMonth(), nowWIB.getDate());
+  today.setHours(0, 0, 0, 0); // Pastikan reset ke 00:00:00
+  return today;
 };
 
 // Helper: Update mission progress (modifikasi: cek hari & ownership)
@@ -35,24 +37,33 @@ const updateMissionProgress = async (userId, missionId) => {
 
     if (!missionLog) return;
 
-    // Increment progress
-    const updatedLog = await prisma.mission_Log.update({
-      where: { id: missionLog.id },
-      data: { 
-        progress: { increment: 1 },
-        status: "in_progress" // Update status jika belum
-      }
-    });
-    // Check completion
-    if (updatedLog.progress >= missionLog.mission.target) {
-      await prisma.mission_Log.update({
-        where: { id: missionLog.id },
-        data: { 
-          completed: true,
-          status: "completed"
-        }
-      });
+    // Tambah log
+console.log('Updating progress for missionId:', missionId, 'current progress before:', missionLog.progress);
+
+// Increment progress
+const updatedLog = await prisma.mission_Log.update({
+  where: { id: missionLog.id },
+  data: { 
+    progress: { increment: 1 },
+    status: "in_progress"
+  }
+});
+
+console.log('Progress after increment:', updatedLog.progress, 'target:', missionLog.mission.target);
+
+// Check completion only if progress >= target
+if (updatedLog.progress >= missionLog.mission.target) {
+  console.log('Setting completed');
+  await prisma.mission_Log.update({
+    where: { id: missionLog.id },
+    data: { 
+      completed: true,
+      status: "completed"
     }
+  });
+} else {
+  console.log('Not completed yet');
+}
   } catch (error) {
     console.error('Error updating mission progress:', error);
   }
@@ -184,6 +195,7 @@ getAllMission: async (req, res) => {
       todayUTC.setHours(todayUTC.getHours() - 7);
       const tomorrowUTC = new Date(todayUTC);
       tomorrowUTC.setDate(tomorrowUTC.getDate() + 1);
+
       const logs = await prisma.mission_Log.findMany({
         where: {
           user_id: userId,
@@ -191,6 +203,10 @@ getAllMission: async (req, res) => {
         },
         include: { mission: true }
       });
+      console.log('Today WIB:', getTodayWIB());
+      console.log('Today UTC:', todayUTC);
+      console.log('Tomorrow UTC:', tomorrowUTC);
+      console.log('Logs found:', logs.length);
       res.status(200).json({ message: 'Mission logs retrieved', data: logs });
     } catch (error) {
       console.error('Error fetching mission logs:', error);
@@ -201,19 +217,19 @@ getAllMission: async (req, res) => {
   createDailyMissions: async (req, res) => {
     try {
       const userId = req.user.userId;
-      const todayWIB = getTodayWIB();
-      // Check existing logs (adjust query to WIB)
-      const todayUTC = new Date(todayWIB);
-      todayUTC.setHours(todayUTC.getHours() - 7);
-      const tomorrowUTC = new Date(todayUTC);
-      tomorrowUTC.setDate(tomorrowUTC.getDate() + 1);
-      const existingLogs = await prisma.mission_Log.count({
-        where: { user_id: userId, missionDate: { gte: todayUTC, lt: tomorrowUTC } }
-      });
+       const todayWIB = getTodayWIB();
+        const todayUTC = new Date(todayWIB);
+        todayUTC.setHours(todayUTC.getHours() - 7);
+        const tomorrowUTC = new Date(todayUTC);
+        tomorrowUTC.setDate(tomorrowUTC.getDate() + 1);
 
-       if (existingLogs >= 2) {
-        return res.status(200).json({ message: 'Daily missions already exist' });
-      }
+        // Cek existing logs hari ini
+        const existingLogs = await prisma.mission_Log.count({
+          where: { user_id: userId, missionDate: { gte: todayUTC, lt: tomorrowUTC } }
+        });
+        if (existingLogs >= 2) {
+          return res.status(200).json({ message: 'Daily missions already exist for today' });
+        }
       // Get all missions, select 2 random
       const allMissions = await prisma.mission.findMany();
       const randomMissions = allMissions.sort(() => 0.5 - Math.random()).slice(0, 2);
