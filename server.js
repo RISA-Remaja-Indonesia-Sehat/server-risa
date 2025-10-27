@@ -12,7 +12,7 @@ app.use(express.json());
 
 // Initialize database connections
 const initializeDatabases = async () => {
-  await connectMongoDB();
+  // await connectMongoDB();
   await testPrismaConnection();
 };
 

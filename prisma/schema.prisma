@@ -106,9 +106,72 @@ model Voucher {
 
 model Voucher_Claim {
   id         Int      @id @default(autoincrement())
-  user_id    Int
+  user_id    Users[]
   voucher_id Int
   claimedAt  DateTime @default(now())
   user       Users    @relation(fields: [user_id], references: [id])
   voucher    Voucher    @relation(fields: [voucher_id], references: [id])
+}
+
+enum MiniGameType {
+  DRAG_DROP
+  MEMO_CARD
+}
+
+enum MythFactType {
+  MYTH
+  FACT
+}
+
+model Mini_Games {
+  id          Int            @id @default(autoincrement())
+  type        MiniGameType
+  title       String
+
+  memo_card   Memo_Card?     @relation("GameToMemo")
+  drag_drop   Drag_Drop[]
+  Scores      Scores[]
+}
+
+model Scores {
+  id               Int           @id @default(autoincrement())
+  
+  user_id          Int
+  game_id          Int
+  
+  points           Int           @map("score")
+  duration_seconds Int           @default(0)
+  total_moves      Int           @default(0)
+  correct_answer   Int
+  wrong_answer     Int?
+  
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  User             Users         @relation(fields: [user_id], references: [id])
+  Mini_Game        Mini_Games    @relation(fields: [game_id], references: [id])
+}
+
+
+
+model Memo_Card {
+  id             Int         @id @default(autoincrement())
+  
+  mini_game_id   Int         @unique
+  Mini_Game      Mini_Games  @relation("GameToMemo", fields: [mini_game_id], references: [id])
+  
+  term           String
+  definition     String
+  duration       Int
+}
+
+model Drag_Drop {
+  id             Int          @id @default(autoincrement())
+  
+  mini_game_id   Int
+  Mini_Game      Mini_Games   @relation(fields: [mini_game_id], references: [id])
+  
+  text           String
+  explanation    String
+  correct        MythFactType
 }
