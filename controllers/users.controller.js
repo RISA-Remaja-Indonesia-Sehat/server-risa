@@ -70,9 +70,47 @@ module.exports = {
                     user: {
                         id: user.id,
                         email: user.email,
-                        name: user.name
+                        name: user.name,
+                        stickers: user.stickers
                     }
                 }
+            });
+        } catch (error) {
+            res.status(500).json({ message: 'Server error', error: error.message });
+        }
+    },
+    updateStickers: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { stickers } = req.body;
+
+            const user = await prisma.users.update({
+                where: { id: parseInt(id) },
+                data: { stickers: stickers },
+                select: { id: true, name: true, email: true, stickers: true }
+            });
+
+            res.status(200).json({
+                message: 'Success',
+                data: user
+            });
+        } catch (error) {
+            res.status(500).json({ message: 'Server error', error: error.message });
+        }
+    },
+    getUserById: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const user = await prisma.users.findUnique({
+                where: { id: parseInt(id) },
+                select: { id: true, name: true, email: true, stickers: true }
+            });
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+            res.status(200).json({
+                message: 'Success',
+                data: user
             });
         } catch (error) {
             res.status(500).json({ message: 'Server error', error: error.message });

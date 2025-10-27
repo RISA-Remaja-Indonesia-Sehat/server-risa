@@ -31,6 +31,7 @@ model Articles {
   content   String    @db.Text  // HTML content
   opinion   String    @db.Text  // HTML opinion
   createdAt DateTime  @default(now())
+  tags      String
   comments  Comment[]
 }
 
@@ -49,7 +50,7 @@ model Labs {
   name            String
   address         String
   city            String 
-  phone           String
+  gmaps           String
   latitude        Float
   longitude       Float
   bookingVaccines Booking_Vaccine[]
@@ -64,14 +65,17 @@ model Vaccine_Types {
 }
 
 model Booking_Vaccine {
-  id         Int      @id @default(autoincrement())
-  nik        Int
+  id         String      @id
+  nik        String   
   user_id    Int
+  user_name  String
   age        Int
   gender     String
+  phone      String
   lab_id     Int
   vaccine_id Int
   date_time  DateTime
+  createdAt  DateTime @default(now())
   user       Users    @relation(fields: [user_id], references: [id])
   lab        Labs     @relation(fields: [lab_id], references: [id])
   vaccine    Vaccine_Types    @relation(fields: [vaccine_id], references: [id])
@@ -79,20 +83,28 @@ model Booking_Vaccine {
 
 model Mission {
   id             Int           @id @default(autoincrement())
-  title          String
-  targetCount    Int
-  rewardStickers Int
+  title          String        // "Baca Artikel", "Main Game", etc
+  icon           String        // URL icon
+  target         Int           // Target count (2, 1, 5, etc)
+  reward         Int           // Reward stickers (1, 2, etc)
   missionLogs    Mission_Log[]
 }
 
 model Mission_Log {
-  id         Int      @id @default(autoincrement())
-  user_id    Int
-  mission_id Int
-  isComplete Boolean
-  completedAt DateTime @default(now())
-  user       Users    @relation(fields: [user_id], references: [id])
-  mission    Mission    @relation(fields: [mission_id], references: [id])
+  id           String   @id @default(uuid())
+  user_id      Int
+  mission_id   Int
+  progress     Int      @default(0)     // Current progress (0, 1, 2, etc)
+  completed    Boolean  @default(false) // Mission completed status
+  status       String   @default("idle") // UI status: "idle", "in_progress", "completed" (sync dengan frontend)
+  claimedAt    DateTime? // When user claimed the reward
+  createdAt    DateTime @default(now())
+  missionDate  DateTime @default(now()) // Tanggal misi dimulai (untuk filter harian)
+  user         Users    @relation(fields: [user_id], references: [id])
+  mission      Mission  @relation(fields: [mission_id], references: [id])
+  
+  // Index untuk performa query harian
+  @@index([user_id, missionDate])
 }
 
 model Voucher {
@@ -106,13 +118,15 @@ model Voucher {
 
 model Voucher_Claim {
   id         Int      @id @default(autoincrement())
-  user_id    Users[]
+  user_id    Int
   voucher_id Int
+  voucherCode String
   claimedAt  DateTime @default(now())
   user       Users    @relation(fields: [user_id], references: [id])
   voucher    Voucher    @relation(fields: [voucher_id], references: [id])
 }
 
+// --- ENUMS ---
 enum MiniGameType {
   DRAG_DROP
   MEMO_CARD
@@ -123,6 +137,7 @@ enum MythFactType {
   FACT
 }
 
+// --- MODEL INDUK MINI-GAME ---
 model Mini_Games {
   id          Int            @id @default(autoincrement())
   type        MiniGameType
@@ -133,27 +148,27 @@ model Mini_Games {
   Scores      Scores[]
 }
 
+// --- MODEL TRANSAKSI (SCORE/RESULT) ---
 model Scores {
   id               Int           @id @default(autoincrement())
   
   user_id          Int
   game_id          Int
   
-  points           Int           @map("score")
+  points           Int           @map("score") // Poin yang dihitung oleh frontend
   duration_seconds Int           @default(0)
-  total_moves      Int           @default(0)
+  total_moves      Int           @default(0) // Untuk Memo Card
   correct_answer   Int
-  wrong_answer     Int?
+  wrong_answer     Int?         // Untuk Drag & Drop
   
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
-  User             Users         @relation(fields: [user_id], references: [id])
+  User             Users         @relation("UserToScores", fields: [user_id], references: [id]) 
   Mini_Game        Mini_Games    @relation(fields: [game_id], references: [id])
 }
 
-
-
+// --- MODEL KONTEN ---
 model Memo_Card {
   id             Int         @id @default(autoincrement())
   
