@@ -56,7 +56,7 @@ module.exports = {
                 return res.status(401).json({ message: 'Password Salah' });
             }
             
-            const payload = { userId: user.id, name: user.name, stickers: user.stickers };
+            const payload = { userId: user.id, name: user.name };
             const token = jwt.sign(
                 payload,
                 process.env.JWT_SECRET,
@@ -74,6 +74,43 @@ module.exports = {
                         stickers: user.stickers
                     }
                 }
+            });
+        } catch (error) {
+            res.status(500).json({ message: 'Server error', error: error.message });
+        }
+    },
+    updateStickers: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { stickers } = req.body;
+
+            const user = await prisma.users.update({
+                where: { id: parseInt(id) },
+                data: { stickers: stickers },
+                select: { id: true, name: true, email: true, stickers: true }
+            });
+
+            res.status(200).json({
+                message: 'Success',
+                data: user
+            });
+        } catch (error) {
+            res.status(500).json({ message: 'Server error', error: error.message });
+        }
+    },
+    getUserById: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const user = await prisma.users.findUnique({
+                where: { id: parseInt(id) },
+                select: { id: true, name: true, email: true, stickers: true }
+            });
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+            res.status(200).json({
+                message: 'Success',
+                data: user
             });
         } catch (error) {
             res.status(500).json({ message: 'Server error', error: error.message });
