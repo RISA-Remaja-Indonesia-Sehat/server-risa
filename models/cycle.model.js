@@ -1,4 +1,4 @@
-const { mongoose } = require('../../config/db');
+const { mongoose } = require('../config/db');
 const { Schema, models, model } = mongoose;
 
 const CycleSchema = new Schema(
