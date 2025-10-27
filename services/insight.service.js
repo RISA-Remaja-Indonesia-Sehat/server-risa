@@ -1,6 +1,6 @@
-const Cycle = require('../../models/cycle.model');
-const DailyNote = require('../../models/dailyNote.model');
-const Insight = require('../../models/insight.model');
+const Cycle = require('../models/cycle.model');
+const DailyNote = require('../models/dailyNote.model');
+const Insight = require('../models/insight.model');
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const JAKARTA_OFFSET_MS = 7 * 60 * 60 * 1000;

@@ -1,4 +1,4 @@
-const DailyNote = require('../../models/dailyNote.model');
+const DailyNote = require('../models/dailyNote.model');
 const { findCycleForDateByUser } = require('./cycle.service');
 const insightService = require('./insight.service');
 
