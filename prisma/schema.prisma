@@ -126,7 +126,6 @@ model Voucher_Claim {
   voucher    Voucher    @relation(fields: [voucher_id], references: [id])
 }
 
-
 enum MiniGameType {
   DRAG_DROP
   MEMO_CARD
@@ -142,24 +141,25 @@ model Mini_Games {
   id          Int            @id @default(autoincrement())
   type        MiniGameType
   title       String
-
+  
   memo_card   Memo_Card?     @relation("GameToMemo")
   drag_drop   Drag_Drop[]
   Scores      Scores[]
 }
 
-// --- MODEL TRANSAKSI (SCORE/RESULT) ---
+// --- MODEL TRANSAKSI (SCORE/RESULT) - FK MANUAL ---
+
 model Scores {
   id               Int           @id @default(autoincrement())
   
-  user_id          Int
+  user_id          Int           // FOREIGN KEY MANUAL (tanpa relasi ke Users)
   game_id          Int
   
-  points           Int           @map("score") // Poin yang dihitung oleh frontend
+  points           Int           @map("score")
   duration_seconds Int           @default(0)
-  total_moves      Int           @default(0) // Untuk Memo Card
+  total_moves      Int           @default(0)
   correct_answer   Int
-  wrong_answer     Int?         // Untuk Drag & Drop
+  wrong_answer     Int?
   
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
@@ -167,7 +167,8 @@ model Scores {
   Mini_Game        Mini_Games    @relation(fields: [game_id], references: [id])
 }
 
-// --- MODEL KONTEN ---
+// --- MODEL KONTEN MINI-GAME ---
+
 model Memo_Card {
   id             Int         @id @default(autoincrement())
   
