@@ -3,7 +3,7 @@ const { Schema, models, model } = mongoose;
 
 const InsightSchema = new Schema(
   {
-    userId: {
+    user_id: { 
       type: String,
       required: true,
       unique: true,

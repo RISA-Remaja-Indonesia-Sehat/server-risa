@@ -157,26 +157,31 @@ const upsertDailyNote = async ({
 const listDailyNotes = async ({ userId, user_id, from, to, limit = 120 }) => {
   try {
     const uid = user_id || userId;
-    if (!uid) {
-      const e = new Error("UserId is required to list daily notes");
-      e.code = "UNAUTHORIZED";
-      throw e;
+    // If a user id is provided, return that user's notes. If not, fall back to "general" data
+    // (i.e. do not filter by user). This allows clients that don't specify a user to get global/public notes.
+    let query = {};
+    if (uid) {
+      console.log("listDailyNotes: Querying for user:", uid);
+      query = { $or: [{ user_id: uid }, { userId: uid }] };
+    } else {
+      console.log("listDailyNotes: No user id provided — returning general/public daily notes");
+      // query remains empty so it will match all notes (subject to date range and limit)
     }
-    console.log("listDailyNotes: Querying for user:", uid); // Tambah log
-    const query = { $or: [{ user_id: uid }, { userId: uid }] };
+
     if (from || to) {
       query.date = {};
       if (from) query.date.$gte = toDate(from);
       if (to) query.date.$lte = toDate(to);
     }
+
     const notes = await DailyNote.find(query)
       .sort({ date: -1 })
       .limit(Math.max(1, Math.min(limit, 365)))
       .lean();
-    console.log("listDailyNotes: Found notes count:", notes.length); // Log hasil
+    console.log("listDailyNotes: Found notes count:", notes.length);
     return notes.map(sanitizeDailyNote);
   } catch (error) {
-    console.error("Error in listDailyNotes:", error); // Log error
+    console.error("Error in listDailyNotes:", error);
     throw error;
   }
 };

@@ -3,7 +3,8 @@ const { parseDate, ensureUser, respondWithError } = require('./utils');
 
 const listDailyNotes = async (req, res) => {
   try {
-    const user_id = ensureUser(req);
+    // Ekstrak user_id dari token jika ada, tapi jangan force auth
+    const user_id = req.user?.userId || null;  // Opsional, gunakan null jika tidak ada
     const { from, to, limit } = req.query;
 
     const fromDate = from ? parseDate(from, 'from') : undefined;

@@ -102,9 +102,7 @@ const getInsightsForUser = async (userIdOrErd) => {
       throw e;
     }
     console.log("getInsightsForUser: Querying for user:", uid); // Tambah log
-    let insights = await Insight.findOne({
-      $or: [{ userId: uid }, { user_id: uid }],
-    }).lean();
+    let insights = await Insight.findOne({ user_id: uid }).lean();
     console.log("getInsightsForUser: Found insights:", !!insights); // Log hasil
     if (!insights) {
       console.log("getInsightsForUser: Recomputing...");
@@ -127,9 +125,7 @@ const recomputeForUser = async (userIdOrErd) => {
     }
     console.log("recomputeForUser: Starting for user:", uid);
 
-    const cycles = await Cycle.find({
-      $or: [{ user_id: uid }, { userId: uid }],
-    }).lean();
+    const cycles = await Cycle.find({ userId: uid }).lean();
     const cyclesAsc = [...cycles].sort(
       (a, b) =>
         new Date(a.start_date || a.start) - new Date(b.start_date || b.start)
@@ -147,7 +143,7 @@ const recomputeForUser = async (userIdOrErd) => {
     const cycleHistory = buildCycleHistory(cyclesDesc);
 
     const payload = {
-      userId: uid, // Pastikan konsisten dengan model
+      user_id: uid, // Pastikan konsisten dengan model
       averageCycleLength,
       averagePeriodLength,
       moodDistributionLast30d,
@@ -156,7 +152,7 @@ const recomputeForUser = async (userIdOrErd) => {
 
     // Perbaikan: Gunakan $or di findOneAndUpdate
     const updated = await Insight.findOneAndUpdate(
-      { $or: [{ userId: uid }, { user_id: uid }] },
+      { user_id: uid },
       { $set: payload },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     ).lean();
@@ -178,9 +174,7 @@ const predictNextPeriods = async (userIdOrErd, count = 3) => {
     }
     console.log("predictNextPeriods: Predicting for user:", uid);
 
-    const cyclesDesc = await Cycle.find({
-      $or: [{ user_id: uid }, { userId: uid }],
-    }).lean();
+    const cyclesDesc = await Cycle.find({ userId: uid }).lean();
     if (!cyclesDesc.length) return { nextStarts: [] };
 
     const cyclesAsc = [...cyclesDesc].sort(
