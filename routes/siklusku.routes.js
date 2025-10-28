@@ -1,26 +1,24 @@
 const express = require('express');
-const { auth } = require('../middleware/auth');
+const { auth, optionalAuth } = require('../middleware/auth');
 const { listCycles, createCycle, updateCycle, deleteCycle, deleteAllCycles, getPredictions } = require('../controllers/cycles.controller');
 const { listDailyNotes, upsertDailyNote, deleteDailyNote, deleteAllDailyNotes } = require('../controllers/dailyNotes.controller');
 const { getInsights, recomputeInsights } = require('../controllers/insights.controller');
 
 const router = express.Router();
 
-router.use(auth);
-
-router.get('/cycles', listCycles);
-router.post('/cycles', createCycle);
-router.patch('/cycles/:id', updateCycle);
-router.delete('/cycles', deleteAllCycles);
-router.delete('/cycles/:id', deleteCycle);
+router.get('/cycles', optionalAuth, listCycles);
+router.post('/cycles', auth, createCycle);
+router.patch('/cycles/:id', auth, updateCycle);
+router.delete('/cycles', auth, deleteAllCycles);
+router.delete('/cycles/:id', auth, deleteCycle);
 router.get('/cycles/predictions', getPredictions);
 
-router.get('/daily-notes', listDailyNotes);
-router.put('/daily-notes/:date', upsertDailyNote);
-router.delete('/daily-notes', deleteAllDailyNotes);
-router.delete('/daily-notes/:date', deleteDailyNote);
+router.get('/daily-notes', optionalAuth, listDailyNotes);
+router.put('/daily-notes/:date', auth,  upsertDailyNote);
+router.delete('/daily-notes', auth, deleteAllDailyNotes);
+router.delete('/daily-notes/:date', auth, deleteDailyNote);
 
-router.get('/insights', getInsights);
-router.post('/insights/recompute', recomputeInsights);
+router.get('/insights', optionalAuth, getInsights);
+router.post('/insights/recompute', auth, recomputeInsights);
 
 module.exports = router;

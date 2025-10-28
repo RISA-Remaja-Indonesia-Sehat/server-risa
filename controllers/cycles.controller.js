@@ -3,7 +3,10 @@ const { parseDate, ensureUser, respondWithError } = require('./utils');
 
 const listCycles = async (req, res) => {
   try {
-    const user_id = ensureUser(req);
+    console.log('listCycles called with query:', req.query);
+    // Ekstrak user_id dari token jika ada, tapi jangan force auth
+    const user_id = req.user?.userId || null;  // Opsional, gunakan null jika tidak ada
+    console.log(user_id);
     const { limit, before } = req.query;
     const parsedLimit = limit ? Number.parseInt(limit, 10) : undefined;
     const parsedBefore = before ? parseDate(before, 'before') : undefined;
@@ -19,6 +22,7 @@ const listCycles = async (req, res) => {
       data: cycles,
     });
   } catch (error) {
+    console.error('Error in listCycles controller:', error);
     respondWithError(res, error);
   }
 };
