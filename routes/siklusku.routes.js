@@ -6,21 +6,19 @@ const { getInsights, recomputeInsights } = require('../controllers/insights.cont
 
 const router = express.Router();
 
-router.use(auth);
-
 router.get('/cycles', listCycles);
-router.post('/cycles', createCycle);
-router.patch('/cycles/:id', updateCycle);
-router.delete('/cycles', deleteAllCycles);
-router.delete('/cycles/:id', deleteCycle);
+router.post('/cycles', auth, createCycle);
+router.patch('/cycles/:id', auth, updateCycle);
+router.delete('/cycles', auth, deleteAllCycles);
+router.delete('/cycles/:id', auth, deleteCycle);
 router.get('/cycles/predictions', getPredictions);
 
 router.get('/daily-notes', listDailyNotes);
-router.put('/daily-notes/:date', upsertDailyNote);
-router.delete('/daily-notes', deleteAllDailyNotes);
-router.delete('/daily-notes/:date', deleteDailyNote);
+router.put('/daily-notes/:date', auth,  upsertDailyNote);
+router.delete('/daily-notes', auth, deleteAllDailyNotes);
+router.delete('/daily-notes/:date', auth, deleteDailyNote);
 
 router.get('/insights', getInsights);
-router.post('/insights/recompute', recomputeInsights);
+router.post('/insights/recompute', auth, recomputeInsights);
 
 module.exports = router;

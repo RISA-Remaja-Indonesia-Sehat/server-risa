@@ -3,6 +3,7 @@ const { parseDate, ensureUser, respondWithError } = require('./utils');
 
 const listCycles = async (req, res) => {
   try {
+    console.log('listCycles called with query:', req.query);
     const user_id = ensureUser(req);
     const { limit, before } = req.query;
     const parsedLimit = limit ? Number.parseInt(limit, 10) : undefined;
@@ -19,6 +20,7 @@ const listCycles = async (req, res) => {
       data: cycles,
     });
   } catch (error) {
+    console.error('Error in listCycles controller:', error);
     respondWithError(res, error);
   }
 };
