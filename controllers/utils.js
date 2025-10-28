@@ -59,9 +59,7 @@ const parseDate = (value, label, options = {}) => {
 const ensureUser = (req) => {
   const userId = req.user?.userId ?? req.user?.id;
   if (!userId) {
-    const error = new Error('Unauthorized. Please log in.');
-    error.code = 'UNAUTHORIZED';
-    throw error;
+    return res.status(401).json({ message: 'User not authenticated' });
   }
   return userId;
 };

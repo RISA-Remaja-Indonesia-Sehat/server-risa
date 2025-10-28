@@ -228,7 +228,7 @@ const createCycle = async ({
   };
 };
 
-const listCycles = async ({ userId, user_id, limit = 50, before }) => {
+const listCycles = async ({ userId, user_id, limit = 20, before }) => {
   try {
     const uid = user_id || userId;
 
@@ -239,7 +239,7 @@ const listCycles = async ({ userId, user_id, limit = 50, before }) => {
       console.log("listDailyNotes: No user id provided — returning general/public cycles");
       return [];  // Return empty jika tanpa auth
     }
-    
+
     const query = { user_id: uid };  // Gunakan user_id konsisten
     const raw = await Cycle.find(query).lean();
     console.log("listCycles: Raw results count:", raw.length); // Log hasil query
