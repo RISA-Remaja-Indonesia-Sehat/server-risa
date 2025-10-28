@@ -154,7 +154,7 @@ const upsertDailyNote = async ({
   }
 };
 
-const listDailyNotes = async ({ userId, user_id, from, to, limit = 20 }) => {
+const listDailyNotes = async ({ userId, user_id, from, to, limit = 120 }) => {
   try {
     const uid = user_id || userId;
     // If a user id is provided, return that user's notes. If not, fall back to "general" data

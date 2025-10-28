@@ -228,7 +228,7 @@ const createCycle = async ({
   };
 };
 
-const listCycles = async ({ userId, user_id, limit = 20, before }) => {
+const listCycles = async ({ userId, user_id, limit = 90, before }) => {
   try {
     const uid = user_id || userId;
 
@@ -236,7 +236,7 @@ const listCycles = async ({ userId, user_id, limit = 20, before }) => {
     console.log("listCycles: Querying for user:", uid); // Tambah log
     const query = { $or: [{ user_id: uid }, { userId: uid }] };
     } else {
-      console.log("listDailyNotes: No user id provided — returning general/public cycles");
+      console.log("listCycles: No user id provided — returning general/public cycles");
       return [];  // Return empty jika tanpa auth
     }
 
