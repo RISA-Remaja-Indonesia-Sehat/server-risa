@@ -231,15 +231,16 @@ const createCycle = async ({
 const listCycles = async ({ userId, user_id, limit = 50, before }) => {
   try {
     const uid = user_id || userId;
-    // If a user id is provided, return that user's notes. If not, fall back to "general" data
-    // (i.e. do not filter by user). This allows clients that don't specify a user to get global/public notes.
-    let query = {};
+
     if (uid) {
     console.log("listCycles: Querying for user:", uid); // Tambah log
     const query = { $or: [{ user_id: uid }, { userId: uid }] };
     } else {
       console.log("listDailyNotes: No user id provided — returning general/public cycles");
+      return [];  // Return empty jika tanpa auth
     }
+    
+    const query = { user_id: uid };  // Gunakan user_id konsisten
     const raw = await Cycle.find(query).lean();
     console.log("listCycles: Raw results count:", raw.length); // Log hasil query
 
