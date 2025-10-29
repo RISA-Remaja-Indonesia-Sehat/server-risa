@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/routes/*.js": {
+    "api/routes/server.js": {
       "maxDuration": 30
     }
   },
