@@ -19,8 +19,12 @@ app.use(express.json());
 
 // Initialize database connections
 const initializeDatabases = async () => {
-  await connectMongoDB();
-  await testPrismaConnection();
+  try {
+    await connectMongoDB();
+    await testPrismaConnection();
+  } catch (error) {
+    console.error('Database initialization failed:', error);
+  }
 };
 
 const Allrouter = require('./routes/index');

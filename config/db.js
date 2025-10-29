@@ -6,12 +6,24 @@ const prisma = new PrismaClient();
 
 // MongoDB connection
 const connectMongoDB = async () => {
+  // Cek jika sudah terkoneksi (readyState === 1 berarti connected)
+  if (mongoose.connection.readyState === 1) {
+    console.log('MongoDB already connected, skipping reconnect');
+    return;  // Return early untuk cache-awareness
+  }
+
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
+    await mongoose.connect(process.env.MONGODB_URI, {
+      // Opsional: Tambahkan options untuk resilience
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,  // Timeout untuk select server (default 30000, kurangi untuk cepat fail)
+      bufferCommands: false,  // Disable buffering untuk serverless
+    });
     console.log('MongoDB connected successfully');
   } catch (error) {
     console.error('MongoDB connection error:', error);
-    process.exit(1);
+     throw new Error(`Failed to connect to MongoDB: ${error.message}`);
   }
 };
 
