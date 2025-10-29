@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "routes/**/*.js": {
+      "maxDuration": 30
+    }
+  },
+  "regions": ["sin1"]
+}
