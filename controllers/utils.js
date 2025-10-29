@@ -56,7 +56,7 @@ const parseDate = (value, label, options = {}) => {
  * @returns {string} User ID
  * @throws {Error} If user is not authenticated
  */
-const ensureUser = (req) => {
+const ensureUser = (req, res) => {
   const userId = req.user?.userId ?? req.user?.id;
   if (!userId) {
     return res.status(401).json({ message: 'User not authenticated' });

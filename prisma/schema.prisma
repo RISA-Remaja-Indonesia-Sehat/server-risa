@@ -127,66 +127,83 @@ model Voucher_Claim {
 }
 
 enum MiniGameType {
-  DRAG_DROP
-  MEMO_CARD
+  DRAG_DROP
+  MEMO_CARD
 }
 
 enum MythFactType {
-  MYTH
-  FACT
+  MYTH
+  FACT
 }
 
 // --- MODEL INDUK MINI-GAME ---
 model Mini_Games {
-  id          Int            @id @default(autoincrement())
-  type        MiniGameType
-  title       String
-  
-  memo_card   Memo_Card?     @relation("GameToMemo")
-  drag_drop   Drag_Drop[]
-  Scores      Scores[]
+  id          Int            @id @default(autoincrement())
+  type        MiniGameType
+  title       String
+  
+  memo_card   Memo_Card?     @relation("GameToMemo")
+  drag_drop   Drag_Drop[]
+  Scores      Scores[]
 }
 
 // --- MODEL TRANSAKSI (SCORE/RESULT) - FK MANUAL ---
 
 model Scores {
-  id               Int           @id @default(autoincrement())
-  
-  user_id          Int           // FOREIGN KEY MANUAL (tanpa relasi ke Users)
-  game_id          Int
-  
-  points           Int           @map("score")
-  duration_seconds Int           @default(0)
-  total_moves      Int           @default(0)
-  correct_answer   Int
-  wrong_answer     Int?
-  
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  id               Int           @id @default(autoincrement())
+  
+  user_id          Int           // FOREIGN KEY MANUAL (tanpa relasi ke Users)
+  game_id          Int
+  
+  points           Int           @map("score")
+  duration_seconds Int           @default(0)
+  total_moves      Int           @default(0)
+  correct_answer   Int
+  wrong_answer     Int?
+  
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
-  Mini_Game        Mini_Games    @relation(fields: [game_id], references: [id])
+  Mini_Game        Mini_Games    @relation(fields: [game_id], references: [id])
+  // RELASI BARU: ONE-TO-ONE OPSIONAL KE GAME_FEEDBACK
+  Game_Feedback     Game_Feedback? 
+}
+
+// --- MODEL BARU: DETAIL FEEDBACK KESALAHAN UNTUK AI ---
+model Game_Feedback {
+  id                   Int           @id @default(autoincrement())
+  
+  // Relasi One-to-One ke Scores (score_id berfungsi sebagai Unique Key)
+  score_id             Int           @unique
+  Score                Scores        @relation(fields: [score_id], references: [id])
+  
+  // Detail kesalahan, disimpan sebagai JSON karena formatnya bervariasi (drag&drop vs memo)
+  error_details        Json          
+  
+  // Tag yang sudah di-generate di frontend/backend berdasarkan kesalahan (untuk konsumsi AI)
+  generated_tags       String[]
 }
 
 // --- MODEL KONTEN MINI-GAME ---
 
 model Memo_Card {
-  id             Int         @id @default(autoincrement())
-  
-  mini_game_id   Int         @unique
-  Mini_Game      Mini_Games  @relation("GameToMemo", fields: [mini_game_id], references: [id])
-  
-  term           String
-  definition     String
-  duration       Int
+  id             Int         @id @default(autoincrement())
+  
+  mini_game_id   Int         @unique
+  Mini_Game      Mini_Games  @relation("GameToMemo", fields: [mini_game_id], references: [id])
+  
+  term           String
+  definition     String
+  duration       Int
 }
 
 model Drag_Drop {
-  id             Int          @id @default(autoincrement())
-  
-  mini_game_id   Int
-  Mini_Game      Mini_Games   @relation(fields: [mini_game_id], references: [id])
-  
-  text           String
-  explanation    String
-  correct        MythFactType
+  id             Int          @id @default(autoincrement())
+  
+  mini_game_id   Int
+  Mini_Game      Mini_Games   @relation(fields: [mini_game_id], references: [id])
+  
+  text           String
+  explanation    String
+  correct        MythFactType
 }
