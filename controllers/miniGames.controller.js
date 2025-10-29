@@ -1,76 +1,141 @@
-const {prisma} = require('../config/db');
+const { prisma } = require('../config/db');
 
-// Get all mini games
 const getAllMiniGames = async (req, res) => {
-  try {
-    const miniGames = await prisma.miniGame.findMany();
-    res.status(200).json(miniGames);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch mini games' });
-  }
+    try {
+        const miniGames = await prisma.mini_Games.findMany({
+            orderBy: { id: 'asc' }
+        });
+        
+        res.status(200).json({
+            success: true,
+            count: miniGames.length,
+            data: miniGames
+        });
+
+    } catch (error) {
+        console.error("Error fetching mini games:", error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Gagal mengambil data mini games.', 
+            error: error.message 
+        });
+    }
 };
 
-// Get mini game by ID
 const getMiniGameById = async (req, res) => {
-  const { gameId } = req.params;
-    try {
-    const miniGame = await prisma.miniGame.findUnique({
-      where: { id: parseInt(gameId) },
-    });
-    if (!miniGame) {
-      return res.status(404).json({ error: 'Mini game not found' });
+    const gameId = parseInt(req.params.gameId); 
+
+    if (isNaN(gameId)) {
+        return res.status(400).json({ success: false, message: 'ID game tidak valid.' });
     }
-    res.status(200).json(miniGame);
+
+    try {
+        const miniGame = await prisma.mini_Games.findUnique({
+            where: { id: gameId },
+        });
+
+        if (!miniGame) {
+            return res.status(404).json({ success: false, message: 'Mini game tidak ditemukan.' });
+        }
+        
+        res.status(200).json({ success: true, data: miniGame });
+
     } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch mini game' });
+        console.error("Error fetching mini game by ID:", error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Gagal mengambil data mini game.',
+            error: error.message
+        });
     }
 };
 
-// Create a new mini game
 const createMiniGame = async (req, res) => {
-  const { title } = req.body;
+    const { title, type } = req.body;
+    
+    if (!title || !type) {
+        return res.status(400).json({ success: false, message: 'Field title dan type wajib diisi.' });
+    }
+    
     try {
-    const newMiniGame = await prisma.miniGame.create({
-      data: { title },
-    });
-    res.status(201).json(newMiniGame);
+        const newMiniGame = await prisma.mini_Games.create({
+            data: { title: title, type: type },
+        });
+        
+        res.status(201).json({ success: true, message: 'Mini game berhasil dibuat.', data: newMiniGame });
+
     } catch (error) {
-    res.status(500).json({ error: 'Failed to create mini game' });
+        console.error("Error creating mini game:", error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Gagal membuat mini game baru.',
+            error: error.message
+        });
     }
 };
 
-// Update a mini game   
 const updateMiniGame = async (req, res) => {
-  const { gameId } = req.params;
-  const { title } = req.body;
+    const gameId = parseInt(req.params.gameId);
+    const { title, type } = req.body; 
+
+    if (isNaN(gameId) || (!title && !type)) {
+        return res.status(400).json({ success: false, message: 'ID game tidak valid atau data update kosong.' });
+    }
+
     try {
-    const updatedMiniGame = await prisma.miniGame.update({
-      where: { id: parseInt(gameId) },
-        data: { title },
-    });
-    res.status(200).json(updatedMiniGame);
+        const updatedMiniGame = await prisma.mini_Games.update({
+            where: { id: gameId }, 
+            data: { title, type },
+        });
+        
+        res.status(200).json({ success: true, message: 'Mini game berhasil diupdate.', data: updatedMiniGame });
+
     } catch (error) {
-    res.status(500).json({ error: 'Failed to update mini game' });
+        if (error.code === 'P2025') {
+             return res.status(404).json({ success: false, message: 'Mini game yang akan diupdate tidak ditemukan.' });
+        }
+        
+        console.error("Error updating mini game:", error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Gagal mengupdate mini game.',
+            error: error.message
+        });
     }
 };
 
-// Delete a mini game   
 const deleteMiniGame = async (req, res) => {
-  const { gameId } = req.params;
+    const gameId = parseInt(req.params.gameId);
+
+    if (isNaN(gameId)) {
+        return res.status(400).json({ success: false, message: 'ID game tidak valid.' });
+    }
+
     try {
-    await prisma.miniGame.delete({
-      where: { id: parseInt(gameId) },
-    });
-    res.status(204).send();
-} catch (error) {
-    res.status(500).json({ error: 'Failed to delete mini game' });
-    }   
+        await prisma.mini_Games.delete({
+            where: { id: gameId },
+        });
+        
+        res.status(204).send();
+
+    } catch (error) {
+        if (error.code === 'P2025') {
+            return res.status(404).json({ success: false, message: 'Mini game yang akan dihapus tidak ditemukan.' });
+        }
+        
+        console.error("Error deleting mini game:", error.message);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Gagal menghapus mini game.',
+            error: error.message
+        });
+    }
 };
 
 module.exports = {
-  getAllMiniGames,
-  getMiniGameById,
-  createMiniGame,
-  updateMiniGame,
-  deleteMiniGame,
+    getAllMiniGames,
+    getMiniGameById,
+    createMiniGame,
+    updateMiniGame,
+    deleteMiniGame,
 };
