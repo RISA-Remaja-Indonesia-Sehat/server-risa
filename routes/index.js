@@ -9,6 +9,8 @@ const bookingRouter = require('./booking.router');
 const rewardRouter = require('./reward.router');
 const sikluskuRouter = require('./siklusku.routes');
 const missionRouter = require('./missions.router');
+const miniGamesRouter = require('./miniGames.router');
+
 
 // Handle article ID parameter
 router.param('id', (req, res, next, id) => {
@@ -16,6 +18,7 @@ router.param('id', (req, res, next, id) => {
   next();
 });
 
+router.use('/api/mini-games', miniGamesRouter);
 router.use('/api/users', usersRouter);
 router.use('/api/article/:id/comment', commentRouter);
 router.use('/api/article', arrticleRouter);
