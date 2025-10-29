@@ -1,6 +1,6 @@
 {
   "functions": {
-    "routes/*.js": {
+    "routes/index.js": {
       "maxDuration": 30
     }
   },
