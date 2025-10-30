@@ -16,6 +16,15 @@ const validateScoreInput = (data) => {
 };
 
 
+const getAllScores = async (req, res) => {
+    try {
+        const allScores = await prisma.scores.findMany();
+        res.status(200).json({ success: true, count: allScores.length, data: allScores });
+    } catch (error) {
+        console.error("Error fetching all scores:", error.message);
+        res.status(500).json({ success: false, message: 'Gagal mengambil semua skor.', error: error.message });
+    }
+};
 
 const submitScore = async (req, res) => {
     const { 
@@ -188,4 +197,5 @@ module.exports = {
     getLeaderboard,
     getMyScores,
     deleteScore,
+    getAllScores
 };
