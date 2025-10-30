@@ -10,6 +10,7 @@ const rewardRouter = require('./reward.router');
 const sikluskuRouter = require('./siklusku.routes');
 const missionRouter = require('./missions.router');
 const miniGamesRouter = require('./miniGames.router');
+const scoresRouter = require('./scores.router');
 
 
 // Handle article ID parameter
@@ -28,5 +29,6 @@ router.use('/api/booking', bookingRouter);
 router.use('/api/reward', rewardRouter);
 router.use('/api/siklusku', sikluskuRouter);
 router.use('/api/missions', missionRouter);
+router.use('/api/scores', scoresRouter);
 
 module.exports = router;
