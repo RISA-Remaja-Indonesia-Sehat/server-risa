@@ -161,6 +161,7 @@ const getMyScores = async (req, res) => {
 const deleteScore = async (req, res) => {
     const scoreId = parseInt(req.params.scoreId);
 
+
     if (isNaN(scoreId)) {
         return res.status(400).json({ success: false, message: 'ID skor tidak valid.' });
     }
