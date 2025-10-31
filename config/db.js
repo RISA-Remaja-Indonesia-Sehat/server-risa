@@ -14,12 +14,13 @@ const connectMongoDB = async () => {
 
   try {
     await mongoose.connect(process.env.MONGODB_URI, {
-      // Opsional: Tambahkan options untuk resilience
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000,  // Timeout untuk select server (default 30000, kurangi untuk cepat fail)
-      bufferCommands: false,  // Disable buffering untuk serverless
+       maxPoolSize: 10, // Pool koneksi untuk menghindari buffering
+      serverSelectionTimeoutMS: 5000, // Timeout cepat untuk server selection
+      socketTimeoutMS: 45000, // Timeout socket lebih lama
+      bufferCommands: false, // Jangan buffer jika koneksi belum siap
+      bufferMaxEntries: 0, // Nonaktifkan buffering
     });
+    cachedConnection = conn;
     console.log('MongoDB connected successfully');
   } catch (error) {
     console.error('MongoDB connection error:', error);
