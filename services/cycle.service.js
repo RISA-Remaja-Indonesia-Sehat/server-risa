@@ -240,7 +240,8 @@ const listCycles = async ({ user_id, limit = 90, before }) => {
     }
 
     const query = { user_id: uid };  // Gunakan user_id konsisten
-    const raw = await Cycle.find(query).lean();
+    const raw = await Cycle.find(query).maxTimeMS(15000)  // Tambah timeout 15 detik untuk query ini
+      .lean();
     console.log("listCycles: Raw results count:", raw.length); // Log hasil query
 
     const items = raw
