@@ -18,7 +18,6 @@ const connectMongoDB = async () => {
       serverSelectionTimeoutMS: 5000, // Timeout cepat untuk server selection
       socketTimeoutMS: 45000, // Timeout socket lebih lama
       bufferCommands: false, // Jangan buffer jika koneksi belum siap
-      bufferMaxEntries: 0, // Nonaktifkan buffering
     });
     cachedConnection = conn;
     console.log('MongoDB connected successfully');
