@@ -102,7 +102,8 @@ const getInsightsForUser = async (userIdOrErd) => {
       throw e;
     }
     console.log("getInsightsForUser: Querying for user:", uid); // Tambah log
-    let insights = await Insight.findOne({ user_id: uid }).lean();
+    let insights = await Insight.findOne({ user_id: uid }).maxTimeMS(15000)  // Tambah timeout 15 detik untuk query ini
+      .lean();
     console.log("getInsightsForUser: Found insights:", !!insights); // Log hasil
     if (!insights) {
       console.log("getInsightsForUser: Recomputing...");

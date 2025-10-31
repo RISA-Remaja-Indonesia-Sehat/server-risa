@@ -177,7 +177,7 @@ const listDailyNotes = async ({ userId, user_id, from, to, limit = 120 }) => {
     const notes = await DailyNote.find(query)
       .sort({ date: -1 })
       .limit(Math.max(1, Math.min(limit, 50)))
-      .maxTimeMS(20000)  // Tambah timeout 15 detik untuk query ini
+      .maxTimeMS(20000)  // Tambah timeout 20 detik untuk query ini
       .lean();
     console.log("listDailyNotes: Found notes count:", notes.length);
     return notes.map(sanitizeDailyNote);
