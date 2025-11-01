@@ -239,7 +239,7 @@ const listCycles = async ({ user_id, limit = 90, before }) => {
       return [];  // Return empty jika tanpa auth
     }
 
-    const query = { user_id: uid };  // Gunakan user_id konsisten
+    const query = { user_id: String(uid) };  // Gunakan user_id konsisten
     const raw = await Cycle.find(query).sort({ start_date: -1 })
     .limit(limit)
     .maxTimeMS(30000)  // Pastikan ini ada
