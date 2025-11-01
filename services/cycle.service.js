@@ -149,7 +149,7 @@ const ensureNoOverlap = async ({ userId, start, end, excludeId }) => {
 
   const filterLegacy = {
     ...base,
-    userId,
+    user_id: userId,
     $or: [
       { start: { $gte: start, $lte: targetEnd } },
       { end: { $gte: start, $lte: targetEnd } },
@@ -229,7 +229,7 @@ const listCycles = async ({ user_id, limit = 90, before }) => {
     }
 
     const query = { user_id: String(uid) };  // Gunakan user_id konsisten
-    const raw = await Cycle.find({}).sort({ start_date: -1 })
+    const raw = await Cycle.find(query).sort({ start_date: -1 })
     .limit(limit)
     .maxTimeMS(30000)  // Pastikan ini ada
     .lean();  // Gunakan .lean() untuk performa
@@ -261,6 +261,7 @@ const listCycles = async ({ user_id, limit = 90, before }) => {
 };
 
 const updateCycle = async ({ userId, user_id, id, patch }) => {
+  await connectMongoDB();
   const uid = user_id || userId;
   if (!uid || !id) {
     const e = new Error("UserId and cycle id are required to update cycle");
@@ -334,6 +335,7 @@ const updateCycle = async ({ userId, user_id, id, patch }) => {
 };
 
 const deleteCycle = async ({ userId, user_id, id }) => {
+  await connectMongoDB();
   const uid = user_id || userId;
   if (!uid || !id) {
     const e = new Error("UserId and cycle id are required to delete cycle");
@@ -349,13 +351,13 @@ const deleteCycle = async ({ userId, user_id, id }) => {
 
   const cycle = await Cycle.findOneAndDelete({
     _id: id,
-    $or: [{ user_id: uid }, { userId: uid }],
+    user_id: uid
   }).lean();
   if (!cycle) return null;
 
   if (cycle._id) {
     const cid = cycle._id.toString();
-    await DailyNote.deleteMany({ $or: [{ cycle_id: cid }, { cycleId: cid }] });
+    await DailyNote.deleteMany({  cycle_id: cid });
   }
 
   await recalculateCycleLengths(uid);
@@ -368,6 +370,7 @@ const deleteCycle = async ({ userId, user_id, id }) => {
 };
 
 const deleteAllForUser = async ({ userId, user_id }) => {
+  await connectMongoDB();
   const uid = user_id || userId;
   if (!uid) {
     const e = new Error("UserId is required to delete cycles");
@@ -376,7 +379,7 @@ const deleteAllForUser = async ({ userId, user_id }) => {
   }
 
   const cycles = await Cycle.find(
-    { $or: [{ user_id: uid }, { userId: uid }] },
+    { user_id: uid },
     { _id: 1 }
   ).lean();
   const cycleIds = cycles.map((c) => c._id?.toString()).filter(Boolean);
@@ -386,14 +389,13 @@ const deleteAllForUser = async ({ userId, user_id }) => {
     const noteResult = await DailyNote.deleteMany({
       $or: [
         { user_id: uid, cycle_id: { $in: cycleIds } },
-        { userId: uid, cycleId: { $in: cycleIds } },
       ],
     });
     notesDeleted = noteResult.deletedCount || 0;
   }
 
   const cycleResult = await Cycle.deleteMany({
-    $or: [{ user_id: uid }, { userId: uid }],
+ user_id: uid,
   });
   const cyclesDeleted = cycleResult.deletedCount || 0;
 
@@ -404,11 +406,12 @@ const deleteAllForUser = async ({ userId, user_id }) => {
 };
 
 const findCycleForDateByUser = async ({ userId, user_id, date }) => {
+  await connectMongoDB();
   const uid = user_id || userId;
   if (!uid || !date) return null;
   const normalized = new Date(date);
   const cycles = await Cycle.find({
-    $or: [{ user_id: uid }, { userId: uid }],
+    user_id: uid,
   }).lean();
   return findCycleForDate(cycles, normalized);
 };

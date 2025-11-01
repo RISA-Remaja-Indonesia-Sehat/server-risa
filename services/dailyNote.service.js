@@ -1,6 +1,7 @@
 const DailyNote = require("../models/dailyNote.model");
 const { findCycleForDateByUser } = require("./cycle.service");
 const insightService = require("./insight.service");
+const { connectMongoDB } = require("../config/db");
 
 const MOODS = ["senang", "sedih", "kesal", "cemas", "normal"];
 
@@ -92,6 +93,7 @@ const upsertDailyNote = async ({
   cycle_id,
 }) => {
   try {
+    await connectMongoDB();
     const uid = user_id || userId;
     if (!uid) {
       const e = new Error("UserId is required to upsert daily note");
@@ -132,7 +134,7 @@ const upsertDailyNote = async ({
 
     let note = await DailyNote.findOne({
       date: normalizedDate,
-      $or: [{ user_id: uid }, { userId: uid }],
+      user_id: uid,
     });
     if (note) {
       Object.assign(note, update);
@@ -156,6 +158,7 @@ const upsertDailyNote = async ({
 
 const listDailyNotes = async ({ userId, user_id, from, to, limit = 120 }) => {
   try {
+    await connectMongoDB();
     const uid = user_id || userId;
     // If a user id is provided, return that user's notes. If not, fall back to "general" data
     // (i.e. do not filter by user). This allows clients that don't specify a user to get global/public notes.
@@ -189,6 +192,7 @@ const listDailyNotes = async ({ userId, user_id, from, to, limit = 120 }) => {
 
 const deleteDailyNote = async ({ userId, user_id, date }) => {
   try {
+    await connectMongoDB();
     const uid = user_id || userId;
     if (!uid || !date) {
       const e = new Error("UserId and date are required to delete daily note");
@@ -201,7 +205,7 @@ const deleteDailyNote = async ({ userId, user_id, date }) => {
 
     const note = await DailyNote.findOneAndDelete({
       date: normalizedDate,
-      $or: [{ user_id: uid }, { userId: uid }],
+      user_id: uid,
     }).lean();
 
     if (!note) return null;
@@ -217,6 +221,7 @@ const deleteDailyNote = async ({ userId, user_id, date }) => {
 
 const deleteAllForUser = async ({ userId, user_id }) => {
   try {
+    await connectMongoDB();
     const uid = user_id || userId;
     if (!uid) {
       const e = new Error("UserId is required to delete daily notes");
@@ -226,7 +231,7 @@ const deleteAllForUser = async ({ userId, user_id }) => {
     console.log("upsertDailyNote: Upserting for user:", uid);
 
     const result = await DailyNote.deleteMany({
-      $or: [{ user_id: uid }, { userId: uid }],
+      user_id: uid ,
     });
     const notesDeleted = result.deletedCount || 0;
     const insights = await insightService.recomputeForUser(uid);

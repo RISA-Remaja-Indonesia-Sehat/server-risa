@@ -1,6 +1,7 @@
 const Cycle = require("../models/cycle.model");
 const DailyNote = require("../models/dailyNote.model");
 const Insight = require("../models/insight.model");
+const { connectMongoDB } = require("../config/db");
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const JAKARTA_OFFSET_MS = 7 * 60 * 60 * 1000;
@@ -64,6 +65,7 @@ const buildCycleHistory = (cyclesDesc) => {
 };
 
 const buildMoodDistribution = async ({ userId, user_id }) => {
+  await connectMongoDB();
   const uid = user_id || userId;
   if (!uid) return {};
 
@@ -72,7 +74,7 @@ const buildMoodDistribution = async ({ userId, user_id }) => {
   const windowEnd = new Date(end.getTime() + MS_PER_DAY);
 
   const notes = await DailyNote.find({
-    $or: [{ user_id: uid }, { userId: uid }],
+    user_id: uid,
     date: { $gte: start, $lt: windowEnd },
   }).maxTimeMS(20000).lean();
 
@@ -95,6 +97,7 @@ const buildMoodDistribution = async ({ userId, user_id }) => {
 
 const getInsightsForUser = async (userIdOrErd) => {
   try {
+    await connectMongoDB();
     const uid = userIdOrErd;
     if (!uid) {
       const e = new Error("UserId is required to get insights");
@@ -118,6 +121,7 @@ const getInsightsForUser = async (userIdOrErd) => {
 
 const recomputeForUser = async (userIdOrErd) => {
   try {
+    await connectMongoDB();
     const uid = userIdOrErd;
     if (!uid) {
       const e = new Error("UserId is required to recompute insights");
@@ -151,7 +155,6 @@ const recomputeForUser = async (userIdOrErd) => {
       cycleHistory,
     };
 
-    // Perbaikan: Gunakan $or di findOneAndUpdate
     const updated = await Insight.findOneAndUpdate(
       { user_id: uid },
       { $set: payload },
@@ -167,6 +170,7 @@ const recomputeForUser = async (userIdOrErd) => {
 
 const predictNextPeriods = async (userIdOrErd, count = 3) => {
   try {
+    await connectMongoDB();
     const uid = userIdOrErd;
     if (!uid) {
       const e = new Error("UserId is required to predict next periods");

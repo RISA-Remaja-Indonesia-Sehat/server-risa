@@ -142,7 +142,7 @@ model Mini_Games {
   type        MiniGameType
   title       String
   
-  memo_card   Memo_Card?     @relation("GameToMemo")
+  memo_card   Memo_Card[]
   drag_drop   Drag_Drop[]
   Scores      Scores[]
 }
@@ -189,8 +189,8 @@ model Game_Feedback {
 model Memo_Card {
   id             Int         @id @default(autoincrement())
   
-  mini_game_id   Int         @unique
-  Mini_Game      Mini_Games  @relation("GameToMemo", fields: [mini_game_id], references: [id])
+  mini_game_id   Int         
+  Mini_Game      Mini_Games  @relation(fields: [mini_game_id], references: [id])
   
   term           String
   definition     String
