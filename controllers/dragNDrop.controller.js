@@ -114,10 +114,20 @@ const deleteDragNDropItem = async (req, res) => {
     }
 };
 
+const deleteAllDragNDropItems = async (req, res) => {
+    try {
+        const deletedItems = await prisma.drag_Drop.deleteMany({}); 
+        res.status(200).json({ success: true, message: `${deletedItems.count} item drag and drop berhasil dihapus.` });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Gagal menghapus semua item drag and drop.', error: error.message });
+    }
+};
+
 module.exports = {
     getAllDragNDropItems,
     getDragNDropItemById,
     createDragNDropItem,
     updateDragNDropItem,
-    deleteDragNDropItem
+    deleteDragNDropItem,
+    deleteAllDragNDropItems
 };
