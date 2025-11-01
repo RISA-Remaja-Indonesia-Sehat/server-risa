@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Cycle = require("../models/cycle.model");
 const DailyNote = require("../models/dailyNote.model");
 const insightService = require("./insight.service");
+const {connectMongoDB} = require("../config/db")
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -216,6 +217,7 @@ const createCycle = async ({
 
 const listCycles = async ({ user_id, limit = 90, before }) => {
   try {
+    await connectMongoDB();
     const uid = user_id;
 
     if (uid) {
