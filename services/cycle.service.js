@@ -50,7 +50,7 @@ const sanitizeCycle = (cycleDoc) => {
     : null;
 
   const erd = {
-    id: plain._id ? plain._id.toString() : undefined,
+    id: plain._id ? plain._id : undefined,
     user_id: plain.user_id ?? plain.userId,
     start_date: start,
     end_date: end ?? null,
@@ -61,18 +61,7 @@ const sanitizeCycle = (cycleDoc) => {
     updated_at: plain.updated_at ?? plain.updatedAt ?? null,
   };
 
-  return {
-    ...erd,
-    userId: erd.user_id,
-    start: erd.start_date,
-    end: erd.end_date,
-    periodLength: erd.period_length,
-    cycleLength: erd.cycle_length,
-    predictedStart: erd.predicted_start_date,
-    createdAt: erd.created_at,
-    updatedAt: erd.updated_at,
-    lengthDays: erd.period_length,
-  };
+  return erd;
 };
 
 const findCycleForDate = (cycles, date) => {
