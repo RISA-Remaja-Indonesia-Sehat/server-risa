@@ -273,7 +273,7 @@ module.exports = {
       // Get all missions, select 2 random
       const allMissions = await prisma.mission.findMany();
       const randomMissions = allMissions
-        .sort(() => 0.5 - Math.random())
+        .sort(() => 0.4 - Math.random())
         .slice(0, 2);
       // Create logs
       const logs = await Promise.all(
