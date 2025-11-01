@@ -4,15 +4,6 @@ const DailyNote = require("../models/dailyNote.model");
 const insightService = require("./insight.service");
 const {connectMongoDB} = require("../config/db");
 
-const initMongoDB = async () => {
-  try {
-    await connectMongoDB();
-  } catch (error) {
-    console.error("Failed to initialize MongoDB connection:", error);
-  }
-}
-
-initMongoDB();
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const calculateInclusiveDays = (start, end) => {
@@ -182,6 +173,7 @@ const createCycle = async ({
   start_date,
   end_date,
 }) => {
+  await connectMongoDB();
   const uid = user_id;
   const startVal = start_date;
   const endVal = end_date;
@@ -226,6 +218,7 @@ const createCycle = async ({
 
 const listCycles = async ({ user_id, limit = 90, before }) => {
   try {
+    await connectMongoDB();
     const uid = user_id;
 
     if (uid) {
