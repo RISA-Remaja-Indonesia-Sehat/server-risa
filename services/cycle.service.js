@@ -179,16 +179,13 @@ const ensureNoOverlap = async ({ userId, start, end, excludeId }) => {
 };
 
 const createCycle = async ({
-  userId,
   user_id,
-  start,
   start_date,
-  end = null,
-  end_date = null,
+  end_date,
 }) => {
-  const uid = user_id || userId;
-  const startVal = start_date || start;
-  const endVal = end_date ?? end ?? null;
+  const uid = user_id;
+  const startVal = start_date;
+  const endVal = end_date;
 
   if (!uid || !startVal) {
     const e = new Error("Missing required fields for cycle creation");
@@ -201,12 +198,12 @@ const createCycle = async ({
 
   if (normalizedEnd) calculateInclusiveDays(normalizedStart, normalizedEnd);
 
-  await ensureNoOverlap({
-    userId: uid,
-    start: normalizedStart,
-    end: normalizedEnd,
-    excludeId: null,
-  });
+  // await ensureNoOverlap({
+  //   user_id: uid,
+  //   start_date: normalizedStart,
+  //   end_date: normalizedEnd,
+  //   excludeId: null,
+  // });
 
   const cycle = await Cycle.create({
     user_id: uid,
@@ -240,7 +237,7 @@ const listCycles = async ({ user_id, limit = 90, before }) => {
     }
 
     const query = { user_id: String(uid) };  // Gunakan user_id konsisten
-    const raw = await Cycle.find(query).sort({ start_date: -1 })
+    const raw = await Cycle.find({}).sort({ start_date: -1 })
     .limit(limit)
     .maxTimeMS(30000)  // Pastikan ini ada
     .lean();  // Gunakan .lean() untuk performa
