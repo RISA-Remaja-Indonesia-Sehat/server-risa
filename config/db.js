@@ -19,7 +19,7 @@ const connectMongoDB = async () => {
       socketTimeoutMS: 45000, // Timeout socket lebih lama
       bufferCommands: false, // Jangan buffer jika koneksi belum siap
     });
-    cachedConnection = conn;
+    // cachedConnection = conn;
     console.log('MongoDB connected successfully');
   } catch (error) {
     console.error('MongoDB connection error:', error);
