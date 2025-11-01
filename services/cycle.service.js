@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Cycle = require("../models/cycle.model");
 const DailyNote = require("../models/dailyNote.model");
 const insightService = require("./insight.service");
+const {connectMongoDB} = require("../config/db");
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -50,7 +51,7 @@ const sanitizeCycle = (cycleDoc) => {
     : null;
 
   const erd = {
-    id: plain._id ? plain._id.toString() : undefined,
+    id: plain._id ? plain._id : undefined,
     user_id: plain.user_id ?? plain.userId,
     start_date: start,
     end_date: end ?? null,
@@ -61,18 +62,7 @@ const sanitizeCycle = (cycleDoc) => {
     updated_at: plain.updated_at ?? plain.updatedAt ?? null,
   };
 
-  return {
-    ...erd,
-    userId: erd.user_id,
-    start: erd.start_date,
-    end: erd.end_date,
-    periodLength: erd.period_length,
-    cycleLength: erd.cycle_length,
-    predictedStart: erd.predicted_start_date,
-    createdAt: erd.created_at,
-    updatedAt: erd.updated_at,
-    lengthDays: erd.period_length,
-  };
+  return erd;
 };
 
 const findCycleForDate = (cycles, date) => {
@@ -179,16 +169,14 @@ const ensureNoOverlap = async ({ userId, start, end, excludeId }) => {
 };
 
 const createCycle = async ({
-  userId,
   user_id,
-  start,
   start_date,
-  end = null,
-  end_date = null,
+  end_date,
 }) => {
-  const uid = user_id || userId;
-  const startVal = start_date || start;
-  const endVal = end_date ?? end ?? null;
+  await connectMongoDB();
+  const uid = user_id;
+  const startVal = start_date;
+  const endVal = end_date;
 
   if (!uid || !startVal) {
     const e = new Error("Missing required fields for cycle creation");
@@ -201,12 +189,12 @@ const createCycle = async ({
 
   if (normalizedEnd) calculateInclusiveDays(normalizedStart, normalizedEnd);
 
-  await ensureNoOverlap({
-    userId: uid,
-    start: normalizedStart,
-    end: normalizedEnd,
-    excludeId: null,
-  });
+  // await ensureNoOverlap({
+  //   user_id: uid,
+  //   start_date: normalizedStart,
+  //   end_date: normalizedEnd,
+  //   excludeId: null,
+  // });
 
   const cycle = await Cycle.create({
     user_id: uid,
@@ -230,6 +218,7 @@ const createCycle = async ({
 
 const listCycles = async ({ user_id, limit = 90, before }) => {
   try {
+    await connectMongoDB();
     const uid = user_id;
 
     if (uid) {
@@ -239,8 +228,11 @@ const listCycles = async ({ user_id, limit = 90, before }) => {
       return [];  // Return empty jika tanpa auth
     }
 
-    const query = { user_id: uid };  // Gunakan user_id konsisten
-    const raw = await Cycle.find(query).lean();
+    const query = { user_id: String(uid) };  // Gunakan user_id konsisten
+    const raw = await Cycle.find({}).sort({ start_date: -1 })
+    .limit(limit)
+    .maxTimeMS(30000)  // Pastikan ini ada
+    .lean();  // Gunakan .lean() untuk performa
     console.log("listCycles: Raw results count:", raw.length); // Log hasil query
 
     const items = raw

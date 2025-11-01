@@ -74,7 +74,7 @@ const buildMoodDistribution = async ({ userId, user_id }) => {
   const notes = await DailyNote.find({
     $or: [{ user_id: uid }, { userId: uid }],
     date: { $gte: start, $lt: windowEnd },
-  }).lean();
+  }).maxTimeMS(20000).lean();
 
   const distribution = {};
   for (const mood of MOODS) distribution[mood] = 0;
@@ -102,11 +102,12 @@ const getInsightsForUser = async (userIdOrErd) => {
       throw e;
     }
     console.log("getInsightsForUser: Querying for user:", uid); // Tambah log
-    let insights = await Insight.findOne({ user_id: uid }).lean();
+    let insights = await Insight.findOne({ user_id: uid }).maxTimeMS(20000).lean();
     console.log("getInsightsForUser: Found insights:", !!insights); // Log hasil
+
     if (!insights) {
       console.log("getInsightsForUser: Recomputing...");
-      insights = await recomputeForUser(uid);
+      return null;
     }
     return insights;
   } catch (error) {
@@ -125,7 +126,7 @@ const recomputeForUser = async (userIdOrErd) => {
     }
     console.log("recomputeForUser: Starting for user:", uid);
 
-    const cycles = await Cycle.find({ userId: uid }).lean();
+    const cycles = await Cycle.find({ userId: uid }).maxTimeMS(20000).lean();
     const cyclesAsc = [...cycles].sort(
       (a, b) =>
         new Date(a.start_date || a.start) - new Date(b.start_date || b.start)
