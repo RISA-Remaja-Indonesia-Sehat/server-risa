@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const { connectMongoDB, testPrismaConnection } = require('./config/db');
+const { testPrismaConnection } = require('./config/db');
 
 const app = express();
 const PORT = process.env.PORT;
@@ -20,7 +20,6 @@ app.use(express.json());
 // Initialize database connections
 const initializeDatabases = async () => {
   try {
-    await connectMongoDB();
     await testPrismaConnection();
   } catch (error) {
     console.error('Database initialization failed:', error);

@@ -139,6 +139,8 @@ const getLeaderboard = async (req, res) => {
     }
 };
 
+              
+
 
 const getMyScores = async (req, res) => {
     const userId = parseInt(req.query.user_id || req.params.userId); 
@@ -191,11 +193,22 @@ const deleteScore = async (req, res) => {
     }
 };
 
+const deleteAllScores = async (req, res) => {
+    try {
+        await prisma.scores.deleteMany({});
+        res.status(204).send();
+    } catch (error) {
+        console.error("Error deleting all scores:", error.message);
+        res.status(500).json({ success: false, message: 'Gagal menghapus semua skor.', error: error.message });
+    }
+};
+
 
 module.exports = {
     submitScore,
     getLeaderboard,
     getMyScores,
     deleteScore,
-    getAllScores
+    getAllScores,
+    deleteAllScores
 };
