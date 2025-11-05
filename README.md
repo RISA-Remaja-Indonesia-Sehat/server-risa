@@ -1,7 +1,3 @@
-Berikut versi Bahasa Indonesia dari dokumen README untuk **Server-RISA**, lengkap dengan tautan deployment ke server produksi:
-
----
-
 # Server-RISA
 
 Server-RISA adalah **backend API komprehensif** untuk platform kesehatan dan vaksinasi **RISA (Remaja Indonesia SehAt)**, dibangun menggunakan **Node.js** dan **Express.js**.
