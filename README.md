@@ -1,6 +1,6 @@
 # Server-RISA
 
-Server-RISA adalah **backend API komprehensif** untuk platform kesehatan reproduksi dan seksual **RISA (Remaja Indonesia SehAt)**, dibangun menggunakan **Node.js** dan **Express.js**.
+Server-RISA adalah **backend API komprehensif** untuk platform kesehatan seksual dan reproduksi **RISA (Remaja Indonesia SehAt)**, dibangun menggunakan **Node.js** dan **Express.js**.
 Server ini menyediakan berbagai **RESTful API** untuk manajemen user, mini-game, konten edukatif, pemesanan vaksin, serta sistem reward dan misi.
 
 **Server produksi:** [https://server-risa.vercel.app](https://server-risa.vercel.app)
@@ -157,14 +157,12 @@ Struktur database menggunakan **Prisma ORM**, dengan model utama sebagai berikut
 * **Voucher** – Daftar hadiah atau voucher
 * **Mini_Games** – Definisi permainan
 * **Scores** – Catatan hasil permainan
-* **Game_Feedback** – Data analisis permainan berbasis AI
 
 ---
 
 ## Deployment
 
 Server ini dikonfigurasi untuk **deployment di Vercel**.
-File `vercel.json` berisi pengaturan untuk routing dan environment variables.
 
 **Deployment aktif:** [https://server-risa.vercel.app](https://server-risa.vercel.app)
 

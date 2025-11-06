@@ -1,8 +1,0 @@
-{
-  "functions": {
-    "server.js": {
-      "maxDuration": 60
-    }
-  },
-  "regions": ["sin1"]
-}
