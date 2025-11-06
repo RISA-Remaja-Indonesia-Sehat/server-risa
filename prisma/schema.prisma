@@ -165,23 +165,6 @@ model Scores {
   updatedAt        DateTime      @updatedAt
 
   Mini_Game        Mini_Games    @relation(fields: [game_id], references: [id])
-  // RELASI BARU: ONE-TO-ONE OPSIONAL KE GAME_FEEDBACK
-  Game_Feedback     Game_Feedback? 
-}
-
-// --- MODEL BARU: DETAIL FEEDBACK KESALAHAN UNTUK AI ---
-model Game_Feedback {
-  id                   Int           @id @default(autoincrement())
-  
-  // Relasi One-to-One ke Scores (score_id berfungsi sebagai Unique Key)
-  score_id             Int           @unique
-  Score                Scores        @relation(fields: [score_id], references: [id])
-  
-  // Detail kesalahan, disimpan sebagai JSON karena formatnya bervariasi (drag&drop vs memo)
-  error_details        Json          
-  
-  // Tag yang sudah di-generate di frontend/backend berdasarkan kesalahan (untuk konsumsi AI)
-  generated_tags       String[]
 }
 
 // --- MODEL KONTEN MINI-GAME ---
