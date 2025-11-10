@@ -20,6 +20,7 @@ model Users {
   bookingVaccines Booking_Vaccine[]
   missionLogs     Mission_Log[]
   voucherClaims   Voucher_Claim[]
+  dailyNotes      Daily_Note[]
 }
 
 model Articles {
@@ -189,4 +190,23 @@ model Drag_Drop {
   text           String
   explanation    String
   correct        MythFactType
+}
+
+// Siklusku
+model Daily_Note {
+  id             Int           @id @default(autoincrement())
+  user_id        Int
+  date           DateTime      // Tanggal catatan (YYYY-MM-DD)
+  isPeriod       Boolean
+  flowLevel      String?       // "sedikit", "normal", "banyak" - hanya jika isPeriod = true
+  gejala         String        // JSON string array gejala
+  mood           String        // mood yang dipilih
+  levelEnergy    String        // "rendah", "sedang", "tinggi"
+  cerita         String        // cerita harian
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  user           Users         @relation(fields: [user_id], references: [id])
+  
+  // Constraint: satu user hanya bisa punya satu catatan per tanggal
+  @@unique([user_id, date])
 }

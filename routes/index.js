@@ -13,6 +13,7 @@ const scoresRouter = require('./scores.router');
 const memoCardRouter = require('./memoCard.router');
 const dragNDropRouter = require('./dragNDrop.router');
 const gameFeedbackRouter = require('./gameFeedback.routes');
+const dailyNotesRouter = require('./dailyNotes.router');
 
 
 // Handle article ID parameter
@@ -34,6 +35,7 @@ router.use('/api/scores', scoresRouter);
 router.use('/api/memo-cards', memoCardRouter);
 router.use('/api/drag-n-drop', dragNDropRouter);
 router.use('/api/game-feedback', gameFeedbackRouter);
+router.use('/api/daily-notes', dailyNotesRouter);
 
 
 module.exports = router;
