@@ -1,0 +1,212 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("SUPABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Models
+model Users {
+  id              Int               @id @default(autoincrement())
+  name            String
+  email           String            @unique
+  password        String   
+  stickers        Int               @default(0)
+  createdAt       DateTime          @default(now())
+  comments        Comment[]
+  bookingVaccines Booking_Vaccine[]
+  missionLogs     Mission_Log[]
+  voucherClaims   Voucher_Claim[]
+  dailyNotes      Daily_Note[]
+}
+
+model Articles {
+  id        Int       @id @default(autoincrement())
+  title     String
+  imageUrl  String
+  imageAlt  String
+  description String
+  content   String    @db.Text  // HTML content
+  opinion   String    @db.Text  // HTML opinion
+  createdAt DateTime  @default(now())
+  tags      String
+  comments  Comment[]
+}
+
+model Comment {
+  id         Int      @id @default(autoincrement())
+  comment    String
+  user_id    Int
+  article_id Int
+  createdAt  DateTime @default(now())
+  user       Users    @relation(fields: [user_id], references: [id])
+  article    Articles @relation(fields: [article_id], references: [id])
+}
+
+model Labs {
+  id              Int               @id @default(autoincrement())
+  name            String
+  address         String
+  city            String 
+  gmaps           String
+  latitude        Float
+  longitude       Float
+  bookingVaccines Booking_Vaccine[]
+}
+
+model Vaccine_Types {
+  id              Int               @id @default(autoincrement())
+  name            String
+  price           String
+  description     String
+  bookingVaccines Booking_Vaccine[]
+}
+
+model Booking_Vaccine {
+  id         String      @id
+  nik        String   
+  user_id    Int
+  user_name  String
+  age        Int
+  gender     String
+  phone      String
+  lab_id     Int
+  vaccine_id Int
+  date_time  DateTime
+  createdAt  DateTime @default(now())
+  user       Users    @relation(fields: [user_id], references: [id])
+  lab        Labs     @relation(fields: [lab_id], references: [id])
+  vaccine    Vaccine_Types    @relation(fields: [vaccine_id], references: [id])
+}
+
+model Mission {
+  id             Int           @id @default(autoincrement())
+  title          String        // "Baca Artikel", "Main Game", etc
+  icon           String        // URL icon
+  target         Int           // Target count (2, 1, 5, etc)
+  reward         Int           // Reward stickers (1, 2, etc)
+  missionLogs    Mission_Log[]
+}
+
+model Mission_Log {
+  id           String   @id @default(uuid())
+  user_id      Int
+  mission_id   Int
+  progress     Int      @default(0)     // Current progress (0, 1, 2, etc)
+  completed    Boolean  @default(false) // Mission completed status
+  status       String   @default("idle") // UI status: "idle", "in_progress", "completed" (sync dengan frontend)
+  claimedAt    DateTime? // When user claimed the reward
+  createdAt    DateTime @default(now())
+  missionDate  DateTime @default(now()) // Tanggal misi dimulai (untuk filter harian)
+  user         Users    @relation(fields: [user_id], references: [id])
+  mission      Mission  @relation(fields: [mission_id], references: [id])
+  
+  // Index untuk performa query harian
+  @@index([user_id, missionDate])
+}
+
+model Voucher {
+  id            Int             @id @default(autoincrement())
+  title         String
+  cost          Int
+  image         String
+  description   String
+  voucherClaims Voucher_Claim[]
+}
+
+model Voucher_Claim {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  voucher_id Int
+  voucherCode String
+  claimedAt  DateTime @default(now())
+  user       Users    @relation(fields: [user_id], references: [id])
+  voucher    Voucher    @relation(fields: [voucher_id], references: [id])
+}
+
+enum MiniGameType {
+  DRAG_DROP
+  MEMO_CARD
+}
+
+enum MythFactType {
+  MYTH
+  FACT
+}
+
+// --- MODEL INDUK MINI-GAME ---
+model Mini_Games {
+  id          Int            @id @default(autoincrement())
+  type        MiniGameType
+  title       String
+  
+  memo_card   Memo_Card[]
+  drag_drop   Drag_Drop[]
+  Scores      Scores[]
+}
+
+// --- MODEL TRANSAKSI (SCORE/RESULT) - FK MANUAL ---
+
+model Scores {
+  id               Int           @id @default(autoincrement())
+  
+  user_id          Int           // FOREIGN KEY MANUAL (tanpa relasi ke Users)
+  game_id          Int
+  
+  points           Int           @map("score")
+  duration_seconds Int           @default(0)
+  total_moves      Int           @default(0)
+  correct_answer   Int
+  wrong_answer     Int?
+  
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  Mini_Game        Mini_Games    @relation(fields: [game_id], references: [id])
+}
+
+// --- MODEL KONTEN MINI-GAME ---
+
+model Memo_Card {
+  id             Int         @id @default(autoincrement())
+  
+  mini_game_id   Int         
+  Mini_Game      Mini_Games  @relation(fields: [mini_game_id], references: [id])
+  
+  term           String
+  definition     String
+  duration       Int
+}
+
+model Drag_Drop {
+  id             Int          @id @default(autoincrement())
+  
+  mini_game_id   Int
+  Mini_Game      Mini_Games   @relation(fields: [mini_game_id], references: [id])
+  
+  text           String
+  explanation    String
+  correct        MythFactType
+}
+
+// Siklusku
+model Daily_Note {
+  id             Int           @id @default(autoincrement())
+  user_id        Int
+  date           DateTime      // Tanggal catatan (YYYY-MM-DD)
+  isPeriod       Boolean
+  flowLevel      String?       // "sedikit", "normal", "banyak" - hanya jika isPeriod = true
+  gejala         String        // JSON string array gejala
+  mood           String        // mood yang dipilih
+  levelEnergy    String        // "rendah", "sedang", "tinggi"
+  cerita         String        // cerita harian
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  user           Users         @relation(fields: [user_id], references: [id])
+  
+  // Constraint: satu user hanya bisa punya satu catatan per tanggal
+  @@unique([user_id, date])
+}
