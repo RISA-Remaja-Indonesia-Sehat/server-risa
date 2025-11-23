@@ -23,6 +23,7 @@ const initializeDatabases = async () => {
     await testPrismaConnection();
   } catch (error) {
     console.error('Database initialization failed:', error);
+    process.exit(1);
   }
 };
 
