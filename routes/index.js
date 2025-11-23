@@ -14,6 +14,10 @@ const memoCardRouter = require('./memoCard.router');
 const dragNDropRouter = require('./dragNDrop.router');
 const gameFeedbackRouter = require('./gameFeedback.routes');
 const dailyNotesRouter = require('./dailyNotes.router');
+<<<<<<< HEAD
+const pubertyQuestRouter = require('./pubertyQuest.router');
+=======
+>>>>>>> 1867c8a8328e214d9a03d9f9c4580b69d726c391
 
 
 // Handle article ID parameter
@@ -36,6 +40,10 @@ router.use('/api/memo-cards', memoCardRouter);
 router.use('/api/drag-n-drop', dragNDropRouter);
 router.use('/api/game-feedback', gameFeedbackRouter);
 router.use('/api/daily-notes', dailyNotesRouter);
+<<<<<<< HEAD
+router.use('/api/puberty-quest', pubertyQuestRouter);
+=======
+>>>>>>> 1867c8a8328e214d9a03d9f9c4580b69d726c391
 
 
 module.exports = router;
