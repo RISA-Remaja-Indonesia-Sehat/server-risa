@@ -21,6 +21,10 @@ model Users {
   missionLogs     Mission_Log[]
   voucherClaims   Voucher_Claim[]
   dailyNotes      Daily_Note[]
+  communityPosts  Community_Post[]
+  communityComments Community_Comment[]
+  communityLikes  Community_Like[]
+  pubertyProgress Puberty_Quest_Progress[]
 }
 
 model Articles {
@@ -209,4 +213,56 @@ model Daily_Note {
   
   // Constraint: satu user hanya bisa punya satu catatan per tanggal
   @@unique([user_id, date])
+}
+
+// Community - Teman Sebaya
+model Community_Post {
+  id          Int                 @id @default(autoincrement())
+  title       String
+  content     String              @db.Text
+  category    String
+  isAnonymous Boolean             @default(false)
+  userId      Int
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  user        Users               @relation(fields: [userId], references: [id])
+  comments    Community_Comment[]
+  likes       Community_Like[]
+}
+
+model Community_Comment {
+  id          Int            @id @default(autoincrement())
+  content     String         @db.Text
+  isAnonymous Boolean        @default(false)
+  userId      Int
+  postId      Int
+  createdAt   DateTime       @default(now())
+  user        Users          @relation(fields: [userId], references: [id])
+  post        Community_Post @relation(fields: [postId], references: [id])
+}
+
+model Community_Like {
+  id     Int            @id @default(autoincrement())
+  userId Int
+  postId Int
+  user   Users          @relation(fields: [userId], references: [id])
+  post   Community_Post @relation(fields: [postId], references: [id])
+  
+  @@unique([userId, postId])
+}
+
+// Puberty Quest Game
+model Puberty_Quest_Progress {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  chapter         Int
+  completed       Boolean  @default(false)
+  score           Int      @default(0)
+  lastPlayedAt    DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            Users    @relation(fields: [userId], references: [id])
+  
+  @@unique([userId, chapter])
+  @@index([userId])
 }
