@@ -21,10 +21,13 @@ model Users {
   missionLogs     Mission_Log[]
   voucherClaims   Voucher_Claim[]
   dailyNotes      Daily_Note[]
+<<<<<<< HEAD
   communityPosts  Community_Post[]
   communityComments Community_Comment[]
   communityLikes  Community_Like[]
   pubertyProgress Puberty_Quest_Progress[]
+=======
+>>>>>>> 1867c8a8328e214d9a03d9f9c4580b69d726c391
 }
 
 model Articles {
@@ -214,6 +217,7 @@ model Daily_Note {
   // Constraint: satu user hanya bisa punya satu catatan per tanggal
   @@unique([user_id, date])
 }
+<<<<<<< HEAD
 
 // Community - Teman Sebaya
 model Community_Post {
@@ -266,3 +270,5 @@ model Puberty_Quest_Progress {
   @@unique([userId, chapter])
   @@index([userId])
 }
+=======
+>>>>>>> 1867c8a8328e214d9a03d9f9c4580b69d726c391
