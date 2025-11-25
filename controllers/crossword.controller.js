@@ -1,7 +1,7 @@
 const { prisma } = require('../config/db');
 
 const GRID_SIZE = 10;
-const TOTAL_QUESTIONS = 8;
+const TOTAL_QUESTIONS = 5;
 
 function shuffleArray(arr) {
   return arr.sort(() => Math.random() - 0.5);
