@@ -90,11 +90,9 @@ function generateCrosswordGrid(clues) {
       const positions = findPlacementPositions(grid, word);
       
       if (positions.length > 0) {
-        // Hitung jumlah across dan down yang sudah ditempatkan
         const acrossCount = placedWords.filter(w => w.direction === 'across').length;
         const downCount = placedWords.filter(w => w.direction === 'down').length;
         
-        // Filter posisi berdasarkan keseimbangan direction
         let filteredPositions = positions;
         if (acrossCount > downCount) {
           filteredPositions = positions.filter(p => p.direction === 'down');
@@ -102,7 +100,6 @@ function generateCrosswordGrid(clues) {
           filteredPositions = positions.filter(p => p.direction === 'across');
         }
         
-        // Jika tidak ada posisi yang sesuai, gunakan semua posisi
         if (filteredPositions.length === 0) {
           filteredPositions = positions;
         }
@@ -129,18 +126,19 @@ function generateCrosswordGrid(clues) {
 
 const generateCrossword = async (req, res) => {
   try {
+    const totalClues = await prisma.crossword_Clue.count();
+    if (totalClues < 10) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tidak cukup soal di database (minimal 10)'
+      });
+    }
+    
     const clues = await prisma.crossword_Clue.findMany({
       orderBy: { id: 'asc' },
       take: 10,
-      skip: Math.floor(Math.random() * Math.max(1, await prisma.crossword_Clue.count() - 10))
+      skip: Math.floor(Math.random() * (totalClues - 10))
     });
-    
-    if (clues.length < 5) {
-      return res.status(400).json({
-        success: false,
-        message: 'Tidak cukup soal di database'
-      });
-    }
     
     const { grid, clues: placedClues } = generateCrosswordGrid(clues);
     
@@ -188,7 +186,7 @@ const submitCrossword = async (req, res) => {
       }
     });
     
-    const score = Math.round((correctCount / clues.length) * 100);
+    const score = correctCount * 10;
     
     if (user_id) {
       await prisma.scores.create({
@@ -197,9 +195,9 @@ const submitCrossword = async (req, res) => {
           game_id: 3,
           points: score,
           duration_seconds: duration_seconds || 0,
-          total_moves: clues.length,
+          total_moves: 10,
           correct_answer: correctCount,
-          wrong_answer: clues.length - correctCount
+          wrong_answer: 10 - correctCount
         }
       });
     }
@@ -209,7 +207,7 @@ const submitCrossword = async (req, res) => {
       data: {
         score,
         correct: correctCount,
-        total: clues.length,
+        total: 10,
         answers: clues.map(clue => ({
           id: clue.id,
           question: clue.question,
