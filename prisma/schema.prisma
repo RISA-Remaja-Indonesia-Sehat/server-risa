@@ -266,3 +266,10 @@ model Puberty_Quest_Progress {
   @@unique([userId, chapter])
   @@index([userId])
 }
+
+model Crossword_Clue {
+  id        Int       @id @default(autoincrement())
+  question  String    @db.Text
+  answer    String    // A-Z tanpa spasi
+  createdAt DateTime  @default(now())
+}
