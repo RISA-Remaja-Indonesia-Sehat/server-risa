@@ -1,8 +1,0 @@
-// Tambahkan model ini ke schema.prisma sebelum closing brace
-
-model Crossword_Clue {
-  id        Int       @id @default(autoincrement())
-  question  String    @db.Text
-  answer    String    // A-Z tanpa spasi
-  createdAt DateTime  @default(now())
-}

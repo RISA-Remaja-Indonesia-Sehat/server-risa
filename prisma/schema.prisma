@@ -134,6 +134,7 @@ model Voucher_Claim {
 enum MiniGameType {
   DRAG_DROP
   MEMO_CARD
+  CROSSWORD
 }
 
 enum MythFactType {
