@@ -1,6 +1,7 @@
 const { prisma } = require('../config/db');
 
 const GRID_SIZE = 10;
+const TOTAL_QUESTIONS = 8;
 
 function shuffleArray(arr) {
   return arr.sort(() => Math.random() - 0.5);
@@ -30,24 +31,19 @@ function canPlaceWord(grid, word, row, col, direction) {
 
 function hasMinimumDistance(grid, word, row, col, direction, placedWords) {
   const word_upper = word.toUpperCase();
-  const MIN_DISTANCE = 1;
   
   if (direction === 'across') {
-    // Check cells sebelum dan sesudah kata
     if (col > 0 && grid[row][col - 1] !== null) return false;
     if (col + word_upper.length < GRID_SIZE && grid[row][col + word_upper.length] !== null) return false;
     
-    // Check cells di atas dan bawah setiap huruf
     for (let i = 0; i < word_upper.length; i++) {
       if (row > 0 && grid[row - 1][col + i] !== null) return false;
       if (row < GRID_SIZE - 1 && grid[row + 1][col + i] !== null) return false;
     }
   } else {
-    // Check cells sebelum dan sesudah kata
     if (row > 0 && grid[row - 1][col] !== null) return false;
     if (row + word_upper.length < GRID_SIZE && grid[row + word_upper.length][col] !== null) return false;
     
-    // Check cells di kiri dan kanan setiap huruf
     for (let i = 0; i < word_upper.length; i++) {
       if (col > 0 && grid[row + i][col - 1] !== null) return false;
       if (col < GRID_SIZE - 1 && grid[row + i][col + 1] !== null) return false;
@@ -156,17 +152,17 @@ function generateCrosswordGrid(clues) {
 const generateCrossword = async (req, res) => {
   try {
     const totalClues = await prisma.crossword_Clue.count();
-    if (totalClues < 10) {
+    if (totalClues < TOTAL_QUESTIONS) {
       return res.status(400).json({
         success: false,
-        message: 'Tidak cukup soal di database (minimal 10)'
+        message: `Tidak cukup soal di database (minimal ${TOTAL_QUESTIONS})`
       });
     }
     
     const clues = await prisma.crossword_Clue.findMany({
       orderBy: { id: 'asc' },
-      take: 10,
-      skip: Math.floor(Math.random() * (totalClues - 10))
+      take: TOTAL_QUESTIONS,
+      skip: Math.floor(Math.random() * (totalClues - TOTAL_QUESTIONS))
     });
     
     const { grid, clues: placedClues } = generateCrosswordGrid(clues);
@@ -215,7 +211,7 @@ const submitCrossword = async (req, res) => {
       }
     });
     
-    const score = correctCount * 10;
+    const score = Math.round((correctCount / TOTAL_QUESTIONS) * 100);
     
     if (user_id) {
       await prisma.scores.create({
@@ -224,9 +220,9 @@ const submitCrossword = async (req, res) => {
           game_id: 3,
           points: score,
           duration_seconds: duration_seconds || 0,
-          total_moves: 10,
+          total_moves: TOTAL_QUESTIONS,
           correct_answer: correctCount,
-          wrong_answer: 10 - correctCount
+          wrong_answer: TOTAL_QUESTIONS - correctCount
         }
       });
     }
@@ -236,7 +232,7 @@ const submitCrossword = async (req, res) => {
       data: {
         score,
         correct: correctCount,
-        total: 10,
+        total: TOTAL_QUESTIONS,
         answers: clues.map(clue => ({
           id: clue.id,
           question: clue.question,
