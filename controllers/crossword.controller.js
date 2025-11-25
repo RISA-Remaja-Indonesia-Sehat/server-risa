@@ -29,30 +29,6 @@ function canPlaceWord(grid, word, row, col, direction) {
   }
 }
 
-function hasMinimumDistance(grid, word, row, col, direction, placedWords) {
-  const word_upper = word.toUpperCase();
-  
-  if (direction === 'across') {
-    if (col > 0 && grid[row][col - 1] !== null) return false;
-    if (col + word_upper.length < GRID_SIZE && grid[row][col + word_upper.length] !== null) return false;
-    
-    for (let i = 0; i < word_upper.length; i++) {
-      if (row > 0 && grid[row - 1][col + i] !== null) return false;
-      if (row < GRID_SIZE - 1 && grid[row + 1][col + i] !== null) return false;
-    }
-  } else {
-    if (row > 0 && grid[row - 1][col] !== null) return false;
-    if (row + word_upper.length < GRID_SIZE && grid[row + word_upper.length][col] !== null) return false;
-    
-    for (let i = 0; i < word_upper.length; i++) {
-      if (col > 0 && grid[row + i][col - 1] !== null) return false;
-      if (col < GRID_SIZE - 1 && grid[row + i][col + 1] !== null) return false;
-    }
-  }
-  
-  return true;
-}
-
 function placeWord(grid, word, row, col, direction) {
   const word_upper = word.toUpperCase();
   
@@ -67,16 +43,16 @@ function placeWord(grid, word, row, col, direction) {
   }
 }
 
-function findPlacementPositions(grid, word, placedWords) {
+function findPlacementPositions(grid, word) {
   const word_upper = word.toUpperCase();
   const positions = [];
   
   for (let row = 0; row < GRID_SIZE; row++) {
     for (let col = 0; col < GRID_SIZE; col++) {
-      if (canPlaceWord(grid, word, row, col, 'across') && hasMinimumDistance(grid, word, row, col, 'across', placedWords)) {
+      if (canPlaceWord(grid, word, row, col, 'across')) {
         positions.push({ row, col, direction: 'across' });
       }
-      if (canPlaceWord(grid, word, row, col, 'down') && hasMinimumDistance(grid, word, row, col, 'down', placedWords)) {
+      if (canPlaceWord(grid, word, row, col, 'down')) {
         positions.push({ row, col, direction: 'down' });
       }
     }
@@ -112,7 +88,7 @@ function generateCrosswordGrid(clues) {
         placed = true;
       }
     } else {
-      const positions = findPlacementPositions(grid, word, placedWords);
+      const positions = findPlacementPositions(grid, word);
       
       if (positions.length > 0) {
         const acrossCount = placedWords.filter(w => w.direction === 'across').length;
@@ -219,7 +195,7 @@ const submitCrossword = async (req, res) => {
           user_id: parseInt(user_id),
           game_id: 3,
           points: score,
-          duration_seconds: duration_seconds || 0,
+          duration_seconds: parseInt(duration_seconds) || 0,
           total_moves: TOTAL_QUESTIONS,
           correct_answer: correctCount,
           wrong_answer: TOTAL_QUESTIONS - correctCount
