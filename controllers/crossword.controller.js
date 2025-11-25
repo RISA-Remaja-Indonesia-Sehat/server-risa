@@ -43,17 +43,42 @@ function placeWord(grid, word, row, col, direction) {
   }
 }
 
-function findPlacementPositions(grid, word) {
+function hasIntersection(grid, word, row, col, direction) {
+  const word_upper = word.toUpperCase();
+  
+  if (direction === 'across') {
+    for (let i = 0; i < word_upper.length; i++) {
+      if (grid[row][col + i] !== null && grid[row][col + i] === word_upper[i]) {
+        return true;
+      }
+    }
+  } else {
+    for (let i = 0; i < word_upper.length; i++) {
+      if (grid[row + i][col] !== null && grid[row + i][col] === word_upper[i]) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function findPlacementPositions(grid, word, requireIntersection = false) {
   const word_upper = word.toUpperCase();
   const positions = [];
   
   for (let row = 0; row < GRID_SIZE; row++) {
     for (let col = 0; col < GRID_SIZE; col++) {
       if (canPlaceWord(grid, word, row, col, 'across')) {
-        positions.push({ row, col, direction: 'across' });
+        const hasInt = hasIntersection(grid, word, row, col, 'across');
+        if (!requireIntersection || hasInt) {
+          positions.push({ row, col, direction: 'across' });
+        }
       }
       if (canPlaceWord(grid, word, row, col, 'down')) {
-        positions.push({ row, col, direction: 'down' });
+        const hasInt = hasIntersection(grid, word, row, col, 'down');
+        if (!requireIntersection || hasInt) {
+          positions.push({ row, col, direction: 'down' });
+        }
       }
     }
   }
@@ -68,57 +93,63 @@ function generateCrosswordGrid(clues) {
   const sortedClues = [...clues].sort((a, b) => b.answer.length - a.answer.length);
   
   for (let i = 0; i < sortedClues.length; i++) {
-    const clue = sortedClues[i];
-    const word = clue.answer;
+    let clue = sortedClues[i];
+    let word = clue.answer;
     let placed = false;
+    let attempts = 0;
+    const maxAttempts = 3;
     
-    if (placedWords.length === 0) {
-      const startCol = Math.floor((GRID_SIZE - word.length) / 2);
-      const startRow = Math.floor(GRID_SIZE / 2);
-      
-      if (canPlaceWord(grid, word, startRow, startCol, 'across')) {
-        placeWord(grid, word, startRow, startCol, 'across');
-        placedWords.push({
-          ...clue,
-          row: startRow,
-          col: startCol,
-          direction: 'across',
-          length: word.length
-        });
-        placed = true;
-      }
-    } else {
-      const positions = findPlacementPositions(grid, word);
-      
-      if (positions.length > 0) {
-        const acrossCount = placedWords.filter(w => w.direction === 'across').length;
-        const downCount = placedWords.filter(w => w.direction === 'down').length;
+    while (!placed && attempts < maxAttempts) {
+      if (placedWords.length === 0) {
+        const startCol = Math.floor((GRID_SIZE - word.length) / 2);
+        const startRow = Math.floor(GRID_SIZE / 2);
         
-        let filteredPositions = positions;
-        if (acrossCount > downCount) {
-          filteredPositions = positions.filter(p => p.direction === 'down');
-        } else if (downCount > acrossCount) {
-          filteredPositions = positions.filter(p => p.direction === 'across');
-        }
-        
-        if (filteredPositions.length === 0) {
-          filteredPositions = positions;
-        }
-        
-        const pos = filteredPositions[Math.floor(Math.random() * filteredPositions.length)];
-        
-        if (canPlaceWord(grid, word, pos.row, pos.col, pos.direction)) {
-          placeWord(grid, word, pos.row, pos.col, pos.direction);
+        if (canPlaceWord(grid, word, startRow, startCol, 'across')) {
+          placeWord(grid, word, startRow, startCol, 'across');
           placedWords.push({
             ...clue,
-            row: pos.row,
-            col: pos.col,
-            direction: pos.direction,
+            row: startRow,
+            col: startCol,
+            direction: 'across',
             length: word.length
           });
           placed = true;
         }
+      } else {
+        const positions = findPlacementPositions(grid, word, true);
+        
+        if (positions.length > 0) {
+          const acrossCount = placedWords.filter(w => w.direction === 'across').length;
+          const downCount = placedWords.filter(w => w.direction === 'down').length;
+          
+          let filteredPositions = positions;
+          if (acrossCount > downCount) {
+            filteredPositions = positions.filter(p => p.direction === 'down');
+          } else if (downCount > acrossCount) {
+            filteredPositions = positions.filter(p => p.direction === 'across');
+          }
+          
+          if (filteredPositions.length === 0) {
+            filteredPositions = positions;
+          }
+          
+          const pos = filteredPositions[Math.floor(Math.random() * filteredPositions.length)];
+          
+          if (canPlaceWord(grid, word, pos.row, pos.col, pos.direction)) {
+            placeWord(grid, word, pos.row, pos.col, pos.direction);
+            placedWords.push({
+              ...clue,
+              row: pos.row,
+              col: pos.col,
+              direction: pos.direction,
+              length: word.length
+            });
+            placed = true;
+          }
+        }
       }
+      
+      attempts++;
     }
   }
   
