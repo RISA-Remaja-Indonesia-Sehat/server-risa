@@ -1,194 +1,33 @@
 const { prisma } = require('../config/db');
 
 const GRID_SIZE = 10;
-const TOTAL_QUESTIONS = 5;
-
-function shuffleArray(arr) {
-  return arr.sort(() => Math.random() - 0.5);
-}
-
-function canPlaceWord(grid, word, row, col, direction) {
-  const word_upper = word.toUpperCase();
-  
-  if (direction === 'across') {
-    if (col + word_upper.length > GRID_SIZE) return false;
-    
-    for (let i = 0; i < word_upper.length; i++) {
-      const cell = grid[row][col + i];
-      if (cell !== null && cell !== word_upper[i]) return false;
-    }
-    return true;
-  } else {
-    if (row + word_upper.length > GRID_SIZE) return false;
-    
-    for (let i = 0; i < word_upper.length; i++) {
-      const cell = grid[row + i][col];
-      if (cell !== null && cell !== word_upper[i]) return false;
-    }
-    return true;
-  }
-}
-
-function placeWord(grid, word, row, col, direction) {
-  const word_upper = word.toUpperCase();
-  
-  if (direction === 'across') {
-    for (let i = 0; i < word_upper.length; i++) {
-      grid[row][col + i] = word_upper[i];
-    }
-  } else {
-    for (let i = 0; i < word_upper.length; i++) {
-      grid[row + i][col] = word_upper[i];
-    }
-  }
-}
-
-function hasIntersection(grid, word, row, col, direction) {
-  const word_upper = word.toUpperCase();
-  
-  if (direction === 'across') {
-    for (let i = 0; i < word_upper.length; i++) {
-      if (grid[row][col + i] !== null && grid[row][col + i] === word_upper[i]) {
-        return true;
-      }
-    }
-  } else {
-    for (let i = 0; i < word_upper.length; i++) {
-      if (grid[row + i][col] !== null && grid[row + i][col] === word_upper[i]) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-function findPlacementPositions(grid, word, requireIntersection = false) {
-  const word_upper = word.toUpperCase();
-  const positions = [];
-  
-  for (let row = 0; row < GRID_SIZE; row++) {
-    for (let col = 0; col < GRID_SIZE; col++) {
-      if (canPlaceWord(grid, word, row, col, 'across')) {
-        const hasInt = hasIntersection(grid, word, row, col, 'across');
-        if (!requireIntersection || hasInt) {
-          positions.push({ row, col, direction: 'across' });
-        }
-      }
-      if (canPlaceWord(grid, word, row, col, 'down')) {
-        const hasInt = hasIntersection(grid, word, row, col, 'down');
-        if (!requireIntersection || hasInt) {
-          positions.push({ row, col, direction: 'down' });
-        }
-      }
-    }
-  }
-  
-  return positions;
-}
-
-function generateCrosswordGrid(clues) {
-  const grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null));
-  const placedWords = [];
-  
-  const sortedClues = [...clues].sort((a, b) => b.answer.length - a.answer.length);
-  
-  for (let i = 0; i < sortedClues.length; i++) {
-    let clue = sortedClues[i];
-    let word = clue.answer;
-    let placed = false;
-    let attempts = 0;
-    const maxAttempts = 3;
-    
-    while (!placed && attempts < maxAttempts) {
-      if (placedWords.length === 0) {
-        const startCol = Math.floor((GRID_SIZE - word.length) / 2);
-        const startRow = Math.floor(GRID_SIZE / 2);
-        
-        if (canPlaceWord(grid, word, startRow, startCol, 'across')) {
-          placeWord(grid, word, startRow, startCol, 'across');
-          placedWords.push({
-            ...clue,
-            row: startRow,
-            col: startCol,
-            direction: 'across',
-            length: word.length
-          });
-          placed = true;
-        }
-      } else {
-        const positions = findPlacementPositions(grid, word, true);
-        
-        if (positions.length > 0) {
-          const acrossCount = placedWords.filter(w => w.direction === 'across').length;
-          const downCount = placedWords.filter(w => w.direction === 'down').length;
-          
-          let filteredPositions = positions;
-          if (acrossCount > downCount) {
-            filteredPositions = positions.filter(p => p.direction === 'down');
-          } else if (downCount > acrossCount) {
-            filteredPositions = positions.filter(p => p.direction === 'across');
-          }
-          
-          if (filteredPositions.length === 0) {
-            filteredPositions = positions;
-          }
-          
-          const pos = filteredPositions[Math.floor(Math.random() * filteredPositions.length)];
-          
-          if (canPlaceWord(grid, word, pos.row, pos.col, pos.direction)) {
-            placeWord(grid, word, pos.row, pos.col, pos.direction);
-            placedWords.push({
-              ...clue,
-              row: pos.row,
-              col: pos.col,
-              direction: pos.direction,
-              length: word.length
-            });
-            placed = true;
-          }
-        }
-      }
-      
-      attempts++;
-    }
-  }
-  
-  return { grid, clues: placedWords };
-}
+const TOTAL_QUESTIONS = 8;
 
 const generateCrossword = async (req, res) => {
   try {
-    const totalClues = await prisma.crossword_Clue.count();
-    if (totalClues < TOTAL_QUESTIONS) {
-      return res.status(400).json({
-        success: false,
-        message: `Tidak cukup soal di database (minimal ${TOTAL_QUESTIONS})`
-      });
-    }
-    
     const clues = await prisma.crossword_Clue.findMany({
-      orderBy: { id: 'asc' },
-      take: TOTAL_QUESTIONS,
-      skip: Math.floor(Math.random() * (totalClues - TOTAL_QUESTIONS))
+      where: { game_id: 3 },
+      orderBy: { id: 'asc' }
     });
     
-    const { grid, clues: placedClues } = generateCrosswordGrid(clues);
-    
-    const formattedClues = placedClues.map(clue => ({
-      id: clue.id,
-      question: clue.question,
-      answer: clue.answer,
-      direction: clue.direction,
-      row: clue.row,
-      col: clue.col,
-      length: clue.length
-    }));
+    if (clues.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tidak ada soal crossword di database'
+      });
+    }
     
     res.status(200).json({
       success: true,
       data: {
-        grid,
-        clues: formattedClues
+        clues: clues.map(c => ({
+          id: c.id,
+          question: c.question,
+          row: c.row,
+          col: c.col,
+          direction: c.direction,
+          length: c.answer.length
+        }))
       }
     });
   } catch (error) {
@@ -206,9 +45,7 @@ const submitCrossword = async (req, res) => {
   
   try {
     const clues = await prisma.crossword_Clue.findMany({
-      where: {
-        id: { in: Object.keys(answers).map(Number) }
-      }
+      where: { game_id: 3 }
     });
     
     let correctCount = 0;
@@ -218,7 +55,7 @@ const submitCrossword = async (req, res) => {
       }
     });
     
-    const score = Math.round((correctCount / TOTAL_QUESTIONS) * 100);
+    const score = Math.round((correctCount / clues.length) * 100);
     
     if (user_id) {
       await prisma.scores.create({
@@ -227,9 +64,9 @@ const submitCrossword = async (req, res) => {
           game_id: 3,
           points: score,
           duration_seconds: parseInt(duration_seconds) || 0,
-          total_moves: TOTAL_QUESTIONS,
+          total_moves: clues.length,
           correct_answer: correctCount,
-          wrong_answer: TOTAL_QUESTIONS - correctCount
+          wrong_answer: clues.length - correctCount
         }
       });
     }
@@ -239,7 +76,7 @@ const submitCrossword = async (req, res) => {
       data: {
         score,
         correct: correctCount,
-        total: TOTAL_QUESTIONS,
+        total: clues.length,
         answers: clues.map(clue => ({
           id: clue.id,
           question: clue.question,

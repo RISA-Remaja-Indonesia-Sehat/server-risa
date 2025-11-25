@@ -132,69 +132,70 @@ model Voucher_Claim {
 }
 
 enum MiniGameType {
-  DRAG_DROP
-  MEMO_CARD
+  DRAG_DROP
+  MEMO_CARD
   CROSSWORD
 }
 
 enum MythFactType {
-  MYTH
-  FACT
+  MYTH
+  FACT
 }
 
 // --- MODEL INDUK MINI-GAME ---
 model Mini_Games {
-  id          Int            @id @default(autoincrement())
-  type        MiniGameType
-  title       String
-  
-  memo_card   Memo_Card[]
-  drag_drop   Drag_Drop[]
-  Scores      Scores[]
+  id          Int            @id @default(autoincrement())
+  type        MiniGameType
+  title       String
+  
+  memo_card   Memo_Card[]
+  drag_drop   Drag_Drop[]
+  crossword   Crossword_Clue[]
+  Scores      Scores[]
 }
 
 // --- MODEL TRANSAKSI (SCORE/RESULT) - FK MANUAL ---
 
 model Scores {
-  id               Int           @id @default(autoincrement())
-  
-  user_id          Int           // FOREIGN KEY MANUAL (tanpa relasi ke Users)
-  game_id          Int
-  
-  points           Int           @map("score")
-  duration_seconds Int           @default(0)
-  total_moves      Int           @default(0)
-  correct_answer   Int
-  wrong_answer     Int?
-  
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  id               Int           @id @default(autoincrement())
+  
+  user_id          Int           // FOREIGN KEY MANUAL (tanpa relasi ke Users)
+  game_id          Int
+  
+  points           Int           @map("score")
+  duration_seconds Int           @default(0)
+  total_moves      Int           @default(0)
+  correct_answer   Int
+  wrong_answer     Int?
+  
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
-  Mini_Game        Mini_Games    @relation(fields: [game_id], references: [id])
+  Mini_Game        Mini_Games    @relation(fields: [game_id], references: [id])
 }
 
 // --- MODEL KONTEN MINI-GAME ---
 
 model Memo_Card {
-  id             Int         @id @default(autoincrement())
-  
-  mini_game_id   Int         
-  Mini_Game      Mini_Games  @relation(fields: [mini_game_id], references: [id])
-  
-  term           String
-  definition     String
-  duration       Int
+  id             Int         @id @default(autoincrement())
+  
+  mini_game_id   Int         
+  Mini_Game      Mini_Games  @relation(fields: [mini_game_id], references: [id])
+  
+  term           String
+  definition     String
+  duration       Int
 }
 
 model Drag_Drop {
-  id             Int          @id @default(autoincrement())
-  
-  mini_game_id   Int
-  Mini_Game      Mini_Games   @relation(fields: [mini_game_id], references: [id])
-  
-  text           String
-  explanation    String
-  correct        MythFactType
+  id             Int          @id @default(autoincrement())
+  
+  mini_game_id   Int
+  Mini_Game      Mini_Games   @relation(fields: [mini_game_id], references: [id])
+  
+  text           String
+  explanation    String
+  correct        MythFactType
 }
 
 // Siklusku
@@ -270,7 +271,13 @@ model Puberty_Quest_Progress {
 
 model Crossword_Clue {
   id        Int       @id @default(autoincrement())
+  game_id   Int
   question  String    @db.Text
-  answer    String    // A-Z tanpa spasi
+  answer    String
+  row       Int
+  col       Int
+  direction String
   createdAt DateTime  @default(now())
+
+  Mini_Game Mini_Games @relation(fields: [game_id], references: [id])
 }
