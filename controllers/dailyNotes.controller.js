@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { prisma } = require('../config/db');
 
 const getDailyNotes = async (req, res) => {
   try {
@@ -57,7 +56,7 @@ const createOrUpdateDailyNote = async (req, res) => {
       date: targetDate,
       isPeriod,
       flowLevel: isPeriod ? flowLevel : null,
-      gejala: gejala || '[]',
+      gejala: JSON.stringify(Array.isArray(gejala) ? gejala : []),
       mood,
       levelEnergy,
       cerita: cerita || ''
