@@ -41,7 +41,7 @@ const generateCrossword = async (req, res) => {
 };
 
 const submitCrossword = async (req, res) => {
-  const { user_id, answers, duration_seconds } = req.body;
+  const { answers } = req.body;
   
   try {
     const clues = await prisma.crossword_Clue.findMany({
@@ -56,32 +56,6 @@ const submitCrossword = async (req, res) => {
     });
     
     const score = Math.round((correctCount / clues.length) * 100);
-    let pointsToAdd = 0;
-    
-    if (user_id) {
-      // Check if user already played crossword
-      const existingScore = await prisma.scores.findFirst({
-        where: {
-          user_id: parseInt(user_id),
-          game_id: 3
-        }
-      });
-      
-      // Only add points if first time
-      pointsToAdd = existingScore ? 0 : score;
-      
-      await prisma.scores.create({
-        data: {
-          user_id: parseInt(user_id),
-          game_id: 3,
-          points: pointsToAdd,
-          duration_seconds: parseInt(duration_seconds) || 0,
-          total_moves: clues.length,
-          correct_answer: correctCount,
-          wrong_answer: clues.length - correctCount
-        }
-      });
-    }
     
     res.status(200).json({
       success: true,
@@ -89,7 +63,6 @@ const submitCrossword = async (req, res) => {
         score,
         correct: correctCount,
         total: clues.length,
-        pointsAwarded: pointsToAdd,
         answers: clues.map(clue => ({
           id: clue.id,
           question: clue.question,
