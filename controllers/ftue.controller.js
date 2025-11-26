@@ -1,7 +1,5 @@
 const { prisma } = require('../config/db');
 
-const prisma = new PrismaClient();
-
 const getFTUEProgress = async (req, res) => {
   try {
     const userId = req.user.id;
