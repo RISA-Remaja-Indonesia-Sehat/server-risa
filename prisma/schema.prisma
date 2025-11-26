@@ -25,6 +25,7 @@ model Users {
   communityComments Community_Comment[]
   communityLikes  Community_Like[]
   pubertyProgress Puberty_Quest_Progress[]
+  ftueProgress    FTUE_Progress?
 }
 
 model Articles {
@@ -280,4 +281,13 @@ model Crossword_Clue {
   createdAt DateTime  @default(now())
 
   Mini_Game Mini_Games @relation(fields: [game_id], references: [id])
+}
+
+model FTUE_Progress {
+  id                Int       @id @default(autoincrement())
+  user_id           Int       @unique
+  completed_dialogs Int[]     @default([])
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  user              Users     @relation(fields: [user_id], references: [id])
 }

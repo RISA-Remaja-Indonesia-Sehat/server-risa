@@ -16,6 +16,7 @@ const gameFeedbackRouter = require('./gameFeedback.routes');
 const dailyNotesRouter = require('./dailyNotes.router');
 const pubertyQuestRouter = require('./pubertyQuest.router');
 const crosswordRouter = require('./crossword.router');
+const ftueRouter = require('./ftue.router');
 
 
 // Handle article ID parameter
@@ -40,6 +41,7 @@ router.use('/api/game-feedback', gameFeedbackRouter);
 router.use('/api/daily-notes', dailyNotesRouter);
 router.use('/api/puberty-quest', pubertyQuestRouter);
 router.use('/api/crossword', crosswordRouter);
+router.use('/api/ftue', ftueRouter);
 
 
 module.exports = router;
