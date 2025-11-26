@@ -1,11 +1,11 @@
-import express from 'express';
-import { getFTUEProgress, markDialogComplete, isDialogCompleted } from '../controllers/ftue.controller.js';
-import { verifyToken } from '../middleware/auth.middleware.js';
+const express = require('express');
+const { getFTUEProgress, markDialogComplete, isDialogCompleted } = require('../controllers/ftue.controller.js');
+const { auth } = require('../middleware/auth.js');
 
 const router = express.Router();
 
-router.get('/progress', verifyToken, getFTUEProgress);
-router.post('/mark-complete', verifyToken, markDialogComplete);
-router.get('/is-completed', verifyToken, isDialogCompleted);
+router.get('/progress', auth, getFTUEProgress);
+router.post('/mark-complete', auth, markDialogComplete);
+router.get('/is-completed', auth, isDialogCompleted);
 
-export default router;
+module.exports = router;

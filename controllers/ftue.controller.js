@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+const { prisma } = require('../config/db');
 
-const prisma = new PrismaClient();
-
-export const getFTUEProgress = async (req, res) => {
+const getFTUEProgress = async (req, res) => {
   try {
     const userId = req.user.id;
 
@@ -20,7 +18,7 @@ export const getFTUEProgress = async (req, res) => {
   }
 };
 
-export const markDialogComplete = async (req, res) => {
+const markDialogComplete = async (req, res) => {
   try {
     const userId = req.user.id;
     const { dialogNumber } = req.body;
@@ -55,7 +53,7 @@ export const markDialogComplete = async (req, res) => {
   }
 };
 
-export const isDialogCompleted = async (req, res) => {
+const isDialogCompleted = async (req, res) => {
   try {
     const userId = req.user.id;
     const { dialogNumber } = req.query;
@@ -72,3 +70,5 @@ export const isDialogCompleted = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+module.exports = { getFTUEProgress, markDialogComplete, isDialogCompleted };
