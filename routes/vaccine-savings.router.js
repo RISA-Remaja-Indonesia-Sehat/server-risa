@@ -10,7 +10,7 @@ router.post('/intake', auth, async (req, res) => {
     const { full_name, age, gender, previous_doses, parent_email, parent_phone, parental_consent } = req.body;
     const userId = req.user.userId;
 
-    if (age < 9) {
+    if (parseInt(age) < 9) {
       return res.status(400).json({ success: false, error: 'Age must be at least 9 years old' });
     }
 
@@ -18,9 +18,9 @@ router.post('/intake', auth, async (req, res) => {
       where: { user_id: userId },
       update: {
         full_name,
-        age,
+        age: parseInt(age),
         gender,
-        previous_doses,
+        previous_doses: parseInt(previous_doses),
         parent_email,
         parent_phone,
         parental_consent,
@@ -28,9 +28,9 @@ router.post('/intake', auth, async (req, res) => {
       create: {
         user_id: userId,
         full_name,
-        age,
+        age: parseInt(age),
         gender,
-        previous_doses,
+        previous_doses: parseInt(previous_doses),
         parent_email,
         parent_phone,
         parental_consent,
@@ -48,10 +48,20 @@ router.post('/intake', auth, async (req, res) => {
 router.post('/consent', auth, async (req, res) => {
   try {
     const userId = req.user.userId;
+    const existing = await prisma.vaccine_Savings.findUnique({ where: { user_id: userId } });
 
-    const savings = await prisma.vaccine_Savings.update({
+    const savings = await prisma.vaccine_Savings.upsert({
       where: { user_id: userId },
-      data: { consent_acknowledged: true },
+      update: { consent_acknowledged: true },
+      create: {
+        user_id: userId,
+        full_name: existing?.full_name ?? 'Null',
+        age: existing?.age ?? 0,
+        gender: existing?.gender ?? '',
+        parent_email: existing?.parent_email ?? '',
+        parent_phone: existing?.parent_phone ?? '',
+        consent_acknowledged: true,
+      },
     });
 
     res.json({ success: true, recommendationUrl: '/documents/doctor-recommendation.png' });
@@ -65,10 +75,21 @@ router.post('/consent', auth, async (req, res) => {
 router.post('/bank-setup', auth, async (req, res) => {
   try {
     const userId = req.user.userId;
+    const existing = await prisma.vaccine_Savings.findUnique({ where: { user_id: userId } });
 
-    await prisma.vaccine_Savings.update({
+    await prisma.vaccine_Savings.upsert({
       where: { user_id: userId },
-      data: {
+      update: {
+        bank_account_status: 'ready',
+        profile_status: 'approved',
+      },
+      create: {
+        user_id: userId,
+        full_name: existing?.full_name ?? 'Null',
+        age: existing?.age ?? 0,
+        gender: existing?.gender ?? '',
+        parent_email: existing?.parent_email ?? '',
+        parent_phone: existing?.parent_phone ?? '',
         bank_account_status: 'ready',
         profile_status: 'approved',
       },
@@ -97,6 +118,8 @@ router.post('/setup-target', auth, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Savings duration cannot exceed 365 days' });
     }
 
+    const existing = await prisma.vaccine_Savings.findUnique({ where: { user_id: userId } });
+
     const savings = await prisma.vaccine_Savings.upsert({
       where: { user_id: userId },
       update: {
@@ -107,6 +130,11 @@ router.post('/setup-target', auth, async (req, res) => {
       },
       create: {
         user_id: userId,
+        full_name: existing?.full_name ?? 'Null',
+        age: existing?.age ?? 0,
+        gender: existing?.gender ?? '',
+        parent_email: existing?.parent_email ?? '',
+        parent_phone: existing?.parent_phone ?? '',
         vaccine_type,
         vaccine_price,
         daily_savings_target,
@@ -217,11 +245,35 @@ router.post('/schedule', auth, async (req, res) => {
     res.json({
       success: true,
       ticketUrl: '/documents/vaccination-ticket.pdf',
+      full_name: savings.full_name,
+      age: savings.age,
+      gender: savings.gender,
+      vaccine_type: savings.vaccine_type,
+      parent_phone: savings.parent_phone, 
       dose1: dose1,
       dose2: dose2,
     });
   } catch (error) {
     console.error('Error scheduling vaccination:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET: Check if user has vaccine savings
+router.get('/check-status', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const savings = await prisma.vaccine_Savings.findUnique({
+      where: { user_id: userId },
+    });
+
+    res.json({
+      success: true,
+      hasVaccineSavings: !!savings,
+      status: savings?.profile_status || null,
+    });
+  } catch (error) {
+    console.error('Error checking vaccine savings status:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
