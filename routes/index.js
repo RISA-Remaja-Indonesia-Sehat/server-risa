@@ -17,6 +17,7 @@ const dailyNotesRouter = require('./dailyNotes.router');
 const pubertyQuestRouter = require('./pubertyQuest.router');
 const crosswordRouter = require('./crossword.router');
 const ftueRouter = require('./ftue.router');
+const vaccineSavingsRouter = require('./vaccine-savings.router');
 
 
 // Handle article ID parameter
@@ -42,6 +43,7 @@ router.use('/api/daily-notes', dailyNotesRouter);
 router.use('/api/puberty-quest', pubertyQuestRouter);
 router.use('/api/crossword', crosswordRouter);
 router.use('/api/ftue', ftueRouter);
+router.use('/api/vaccine-savings', vaccineSavingsRouter);
 
 
 module.exports = router;
