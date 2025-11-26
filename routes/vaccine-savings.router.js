@@ -97,9 +97,16 @@ router.post('/setup-target', auth, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Savings duration cannot exceed 365 days' });
     }
 
-    const savings = await prisma.vaccine_Savings.update({
+    const savings = await prisma.vaccine_Savings.upsert({
       where: { user_id: userId },
-      data: {
+      update: {
+        vaccine_type,
+        vaccine_price,
+        daily_savings_target,
+        estimated_days,
+      },
+      create: {
+        user_id: userId,
         vaccine_type,
         vaccine_price,
         daily_savings_target,
