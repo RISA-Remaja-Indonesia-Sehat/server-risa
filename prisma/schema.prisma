@@ -26,6 +26,7 @@ model Users {
   communityLikes  Community_Like[]
   pubertyProgress Puberty_Quest_Progress[]
   ftueProgress    FTUE_Progress?
+  vaccineSavings  Vaccine_Savings?
 }
 
 model Articles {
@@ -290,4 +291,42 @@ model FTUE_Progress {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   user              Users     @relation(fields: [user_id], references: [id])
+}
+
+// Vaccine Savings
+model Vaccine_Savings {
+  id                    Int       @id @default(autoincrement())
+  user_id               Int       @unique
+  full_name             String
+  age                   Int
+  gender                String
+  previous_doses        Int       @default(0)
+  parent_email          String
+  parent_phone          String
+  parental_consent      Boolean   @default(false)
+  consent_acknowledged  Boolean   @default(false)
+  bank_account_status   String    @default("pending")
+  profile_status        String    @default("pending")
+  vaccine_type          String?
+  vaccine_price         Int       @default(0)
+  daily_savings_target  Int       @default(0)
+  estimated_days        Int       @default(0)
+  total_saved           Int       @default(0)
+  last_deposit_date     DateTime?
+  vaccine_status        String    @default("pending")
+  dose1_date            DateTime?
+  dose2_date            DateTime?
+  dose3_date            DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  Users     @relation(fields: [user_id], references: [id])
+  deposits              Vaccine_Deposit[]
+}
+
+model Vaccine_Deposit {
+  id                    Int       @id @default(autoincrement())
+  vaccine_savings_id    Int
+  amount                Int
+  deposit_date          DateTime  @default(now())
+  vaccine_savings       Vaccine_Savings @relation(fields: [vaccine_savings_id], references: [id])
 }
