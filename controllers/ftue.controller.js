@@ -2,7 +2,10 @@ const { prisma } = require('../config/db');
 
 const getFTUEProgress = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'User ID not found in token' });
+    }
 
     const progress = await prisma.fTUE_Progress.findUnique({
       where: { user_id: userId },
@@ -20,7 +23,10 @@ const getFTUEProgress = async (req, res) => {
 
 const markDialogComplete = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'User ID not found in token' });
+    }
     const { dialogNumber } = req.body;
 
     let progress = await prisma.fTUE_Progress.findUnique({
@@ -55,7 +61,10 @@ const markDialogComplete = async (req, res) => {
 
 const isDialogCompleted = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'User ID not found in token' });
+    }
     const { dialogNumber } = req.query;
 
     const progress = await prisma.fTUE_Progress.findUnique({
