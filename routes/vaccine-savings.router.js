@@ -239,9 +239,15 @@ router.get('/dashboard', auth, async (req, res) => {
       data: {
         totalSaved: savings.total_saved,
         target: savings.vaccine_price,
+        vaccinePrice: savings.vaccine_price,
         dailySavingsTarget: savings.daily_savings_target,
         progress: (savings.total_saved / savings.vaccine_price) * 100,
         deposits: savings.deposits,
+        fullName: savings.full_name,
+        age: savings.age,
+        gender: savings.gender,
+        parentPhone: savings.parent_phone,
+        vaccineType: savings.vaccine_type,
       },
     });
   } catch (error) {
@@ -299,9 +305,37 @@ router.get('/check-status', auth, async (req, res) => {
       where: { user_id: userId },
     });
 
+    // Determine completeness of the savings flow.
+    // Steps: 1) Intake (exists) 2) Consent acknowledged 3) Bank setup/profile approved 4) Target configured
+    let isComplete = false;
+    let nextStep = 1;
+
+    if (!savings) {
+      isComplete = false;
+      nextStep = 1;
+    } else {
+      const consentOk = !!savings.consent_acknowledged;
+      const bankOk = savings.bank_account_status === 'ready' || savings.profile_status === 'approved';
+      const targetOk = !!savings.vaccine_price && !!savings.daily_savings_target && savings.vaccine_price > 0 && savings.daily_savings_target > 0;
+
+      if (!consentOk) {
+        nextStep = 2;
+      } else if (!bankOk) {
+        nextStep = 3;
+      } else if (!targetOk) {
+        nextStep = 4;
+      } else {
+        nextStep = 4;
+      }
+
+      isComplete = consentOk && bankOk && targetOk;
+    }
+
     res.json({
       success: true,
       hasVaccineSavings: !!savings,
+      isComplete,
+      nextStep,
       status: savings?.profile_status || null,
     });
   } catch (error) {
