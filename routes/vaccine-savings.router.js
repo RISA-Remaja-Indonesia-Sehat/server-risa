@@ -1,6 +1,27 @@
 const express = require('express');
 const { prisma } = require('../config/db');
 const { auth } = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Prepare upload directory inside server public so files are accessible
+const uploadDir = path.join(__dirname, '..', 'public', 'documents');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const safeName = Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9.\-\_]/g, '_');
+    cb(null, safeName);
+  },
+});
+
+const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } }); // 10 MB
 
 const router = express.Router();
 
@@ -45,14 +66,23 @@ router.post('/intake', auth, async (req, res) => {
 });
 
 // POST: Update consent
-router.post('/consent', auth, async (req, res) => {
+router.post('/consent', auth, upload.single('recommendation'), async (req, res) => {
   try {
     const userId = req.user.userId;
     const existing = await prisma.vaccine_Savings.findUnique({ where: { user_id: userId } });
 
+    let recommendationUrl = existing?.doctor_recommendation_url ?? null;
+    if (req.file) {
+      // store a public URL path (served from /public/documents)
+      recommendationUrl = `/documents/${req.file.filename}`;
+    }
+
     const savings = await prisma.vaccine_Savings.upsert({
       where: { user_id: userId },
-      update: { consent_acknowledged: true },
+      update: {
+        consent_acknowledged: true,
+        doctor_recommendation_url: recommendationUrl,
+      },
       create: {
         user_id: userId,
         full_name: existing?.full_name ?? 'Null',
@@ -61,10 +91,11 @@ router.post('/consent', auth, async (req, res) => {
         parent_email: existing?.parent_email ?? '',
         parent_phone: existing?.parent_phone ?? '',
         consent_acknowledged: true,
+        doctor_recommendation_url: recommendationUrl,
       },
     });
 
-    res.json({ success: true, recommendationUrl: '/documents/doctor-recommendation.png' });
+    res.json({ success: true, recommendationUrl });
   } catch (error) {
     console.error('Error updating consent:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -208,6 +239,7 @@ router.get('/dashboard', auth, async (req, res) => {
       data: {
         totalSaved: savings.total_saved,
         target: savings.vaccine_price,
+        dailySavingsTarget: savings.daily_savings_target,
         progress: (savings.total_saved / savings.vaccine_price) * 100,
         deposits: savings.deposits,
       },
