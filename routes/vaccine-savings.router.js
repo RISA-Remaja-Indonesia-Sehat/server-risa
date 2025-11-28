@@ -4,24 +4,61 @@ const { auth } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
+const { createClient } = require('@supabase/supabase-js');
 
-// Prepare upload directory inside server public so files are accessible
-const uploadDir = path.join(__dirname, '..', 'public', 'documents');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+// Upload directory (fallback)
+const uploadDir = process.env.UPLOAD_DIR || path.join(os.tmpdir(), 'risa-documents');
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (err) {
+  // Do not crash the process; log and continue. File uploads may fail if
+  // directory cannot be created, but other endpoints remain available.
+  console.warn('Could not create upload directory:', uploadDir, err.message);
 }
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const safeName = Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9.\-\_]/g, '_');
-    cb(null, safeName);
-  },
-});
+// Supabase client setup (optional)
+// Expected env vars:
+// - SUPABASE_URL (eg. https://xyz.supabase.co)
+// - SUPABASE_SERVICE_ROLE_KEY (service role key) or SUPABASE_ANON_KEY for less-privileged
+// - SUPABASE_BUCKET (optional, default: 'risa-documents')
+const SUPABASE_URL = process.env.SUPABASE_API_URL || (process.env.SUPABASE_URL && process.env.SUPABASE_URL.startsWith('http') ? process.env.SUPABASE_URL : null);
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || null;
+const SUPABASE_BUCKET = process.env.SUPABASE_BUCKET || 'risa-documents';
+let supabase = null;
+if (SUPABASE_URL && SUPABASE_KEY) {
+  try {
+    supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log('Supabase storage client initialized.');
+  } catch (err) {
+    console.warn('Failed to initialize Supabase client:', err.message);
+    supabase = null;
+  }
+} else {
+  console.warn('Supabase storage not configured (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing). Using local temp dir fallback.');
+}
 
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } }); // 10 MB
+// Choose storage: use memoryStorage when Supabase is available so we can upload
+// directly from memory to Supabase without writing to disk. Otherwise use disk
+// storage to the temp dir as a fallback.
+let upload;
+if (supabase) {
+  const storage = multer.memoryStorage();
+  upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } }); // 10 MB
+} else {
+  const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+      const safeName = Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9.\-\_]/g, '_');
+      cb(null, safeName);
+    },
+  });
+  upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } }); // 10 MB
+}
 
 const router = express.Router();
 
@@ -73,8 +110,33 @@ router.post('/consent', auth, upload.single('recommendation'), async (req, res) 
 
     let recommendationUrl = existing?.doctor_recommendation_url ?? null;
     if (req.file) {
-      // store a public URL path (served from /public/documents)
-      recommendationUrl = `/documents/${req.file.filename}`;
+      // If Supabase is configured we uploaded to it directly (memoryStorage),
+      // and set recommendationUrl to the public URL. If Supabase isn't
+      // configured, the file was stored in the temp dir and we can't provide
+      // a stable public URL from a serverless environment.
+      if (supabase && req.file.buffer) {
+        try {
+          const filename = `${Date.now()}_${req.file.originalname.replace(/[^a-zA-Z0-9.\-\_]/g, '_')}`;
+          const uploadPath = filename;
+          const { data: uploadData, error: uploadErr } = await supabase.storage.from(SUPABASE_BUCKET).upload(uploadPath, req.file.buffer, {
+            contentType: req.file.mimetype,
+            upsert: false,
+          });
+          if (uploadErr) {
+            console.error('Supabase upload error:', uploadErr.message || uploadErr);
+            // Keep recommendationUrl as null and continue; we don't want to crash
+          } else {
+            const { data: urlData } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(uploadPath);
+            recommendationUrl = urlData?.publicUrl ?? null;
+          }
+        } catch (err) {
+          console.error('Error uploading to Supabase:', err.message || err);
+        }
+      } else {
+        // Disk storage fallback (file saved to uploadDir). Log path and leave URL null.
+        console.warn('Uploaded file saved to local tmp path (not publicly available):', req.file.path || req.file.filename);
+        recommendationUrl = null;
+      }
     }
 
     const savings = await prisma.vaccine_Savings.upsert({
