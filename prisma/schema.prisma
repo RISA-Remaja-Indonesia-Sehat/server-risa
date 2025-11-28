@@ -78,7 +78,9 @@ model Booking_Vaccine {
   user_name  String
   age        Int
   gender     String
-  phone      String
+  parent_email String?
+  parent_phone String?
+  doctor_recommendation_url String?
   lab_id     Int
   vaccine_id Int
   date_time  DateTime

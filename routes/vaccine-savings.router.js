@@ -24,7 +24,7 @@ try {
 // - SUPABASE_URL (eg. https://xyz.supabase.co)
 // - SUPABASE_SERVICE_ROLE_KEY (service role key) or SUPABASE_ANON_KEY for less-privileged
 // - SUPABASE_BUCKET (optional, default: 'risa-documents')
-const SUPABASE_URL = process.env.SUPABASE_API_URL || (process.env.SUPABASE_URL && process.env.SUPABASE_URL.startsWith('http') ? process.env.SUPABASE_URL : null);
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || (process.env.SUPABASE_URL && process.env.SUPABASE_URL.startsWith('http') ? process.env.SUPABASE_URL : null);
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || null;
 const SUPABASE_BUCKET = process.env.SUPABASE_BUCKET || 'risa-documents';
 let supabase = null;
