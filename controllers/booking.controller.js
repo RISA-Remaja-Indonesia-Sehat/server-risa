@@ -39,64 +39,64 @@ module.exports = {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // 3. Handle file upload (hanya jika req.file ada dari multer middleware)
+      // 3. Handle file upload (HANYA via Supabase, tanpa fallback lokal)
       let recommendationUrl = null;
+      console.log("Checking req.file:", req.file ? "File exists" : "No file");
       if (req.file) {
-        // Inisialisasi Supabase client
-        const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || null;
-        const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || null;
+        console.log("File details:", req.file.originalname, req.file.mimetype, req.file.size);
+
+        // Validasi: Pastikan Supabase env vars ada (wajib untuk Vercel)
+        const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
         const SUPABASE_BUCKET = process.env.SUPABASE_BUCKET || "risa-documents";
-        let supabase = null;
-        if (SUPABASE_URL && SUPABASE_KEY) {
-          try {
-            supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-          } catch (err) {
-            console.warn("Failed to init Supabase client:", err.message || err);
-            supabase = null;
-          }
+        if (!SUPABASE_URL || !SUPABASE_KEY) {
+          console.error("Supabase env vars missing - upload failed");
+          return res.status(500).json({ message: "File upload service unavailable. Please try again later." });
         }
 
-        if (supabase && req.file.buffer) {
-          // Upload ke Supabase
-          const filename = `${Date.now()}_${req.file.originalname.replace(
-            /[^a-zA-Z0-9.\-\_]/g,
-            "_"
-          )}`;
+        // Inisialisasi Supabase
+        let supabase;
+        try {
+          supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+          console.log("Supabase client initialized");
+        } catch (err) {
+          console.error("Failed to init Supabase:", err.message);
+          return res.status(500).json({ message: "File upload service error. Please try again later." });
+        }
+
+        //Upload ke Supabase
+        if (req.file.buffer) {
+          const filename = `${Date.now()}_${req.file.originalname.replace(/[^a-zA-Z0-9.\-\_]/g, "_")}`;
           try {
-            const { data: uploadData, error: uploadErr } =
-              await supabase.storage
-                .from(SUPABASE_BUCKET)
-                .upload(filename, req.file.buffer, {
-                  contentType: req.file.mimetype,
-                  upsert: false,
-                });
+            const { data: uploadData, error: uploadErr } = await supabase.storage
+              .from(SUPABASE_BUCKET)
+              .upload(filename, req.file.buffer, {
+                contentType: req.file.mimetype,
+                upsert: false,
+              });
             if (uploadErr) {
-              console.error(
-                "Supabase upload error:",
-                uploadErr.message || uploadErr
-              );
+  console.error("Supabase upload error details:", JSON.stringify(uploadErr, null, 2));
+              return res.status(500).json({ message: "Failed to upload file. Please try again." });
             } else {
-              const { data: urlData } = supabase.storage
-                .from(SUPABASE_BUCKET)
-                .getPublicUrl(filename);
+              const { data: urlData } = supabase.storage.from(SUPABASE_BUCKET).getPublicUrl(filename);
               recommendationUrl = urlData?.publicUrl || null;
-              console.log(
-                "File uploaded successfully to Supabase:",
-                recommendationUrl
-              );
+              console.log("Upload success, URL:", recommendationUrl);
             }
           } catch (err) {
-            console.error("Error uploading to Supabase:", err.message || err);
+            console.error("Upload exception:", err.message);
+            return res.status(500).json({ message: "File upload failed. Please try again." });
           }
         } else {
-          // Fallback: Jika Supabase tidak tersedia, simpan ke disk (opsional, tapi tidak set URL)
-          console.warn(
-            "Supabase not available or no file buffer. File not uploaded."
-          );
-          // Jika ingin fallback ke disk, Anda bisa menambahkannya di sini, tapi untuk sekarang, biarkan null
+          console.warn("No file buffer");
         }
       } else {
-        console.log("No file uploaded in request.");
+        console.log("No file uploaded");
+      }
+
+      // Jika masih null, gunakan req.body.recommendationUrl jika ada (untuk URL manual)
+      if (!recommendationUrl) {
+        recommendationUrl = req.body.recommendationUrl || null;
+        console.log("Using manual URL:", recommendationUrl);
       }
 
       // 4. Extract data dari req.body
@@ -139,8 +139,7 @@ module.exports = {
           gender,
           parent_email: parent_email,
           parent_phone: parent_phone,
-          doctor_recommendation_url:
-            recommendationUrl || req.body.recommendationUrl || null, // Gunakan hasil upload atau fallback
+          doctor_recommendation_url: recommendationUrl,
           lab_id: lab.id,
           vaccine_id: vaccine.id,
           date_time: date_time,
