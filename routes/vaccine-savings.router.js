@@ -1,6 +1,27 @@
 const express = require('express');
 const { prisma } = require('../config/db');
 const { auth } = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Prepare upload directory inside server public so files are accessible
+const uploadDir = path.join(__dirname, '..', 'public', 'documents');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const safeName = Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9.\-\_]/g, '_');
+    cb(null, safeName);
+  },
+});
+
+const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } }); // 10 MB
 
 const router = express.Router();
 
@@ -45,14 +66,23 @@ router.post('/intake', auth, async (req, res) => {
 });
 
 // POST: Update consent
-router.post('/consent', auth, async (req, res) => {
+router.post('/consent', auth, upload.single('recommendation'), async (req, res) => {
   try {
     const userId = req.user.userId;
     const existing = await prisma.vaccine_Savings.findUnique({ where: { user_id: userId } });
 
+    let recommendationUrl = existing?.doctor_recommendation_url ?? null;
+    if (req.file) {
+      // store a public URL path (served from /public/documents)
+      recommendationUrl = `/documents/${req.file.filename}`;
+    }
+
     const savings = await prisma.vaccine_Savings.upsert({
       where: { user_id: userId },
-      update: { consent_acknowledged: true },
+      update: {
+        consent_acknowledged: true,
+        doctor_recommendation_url: recommendationUrl,
+      },
       create: {
         user_id: userId,
         full_name: existing?.full_name ?? 'Null',
@@ -61,10 +91,11 @@ router.post('/consent', auth, async (req, res) => {
         parent_email: existing?.parent_email ?? '',
         parent_phone: existing?.parent_phone ?? '',
         consent_acknowledged: true,
+        doctor_recommendation_url: recommendationUrl,
       },
     });
 
-    res.json({ success: true, recommendationUrl: '/documents/doctor-recommendation.png' });
+    res.json({ success: true, recommendationUrl });
   } catch (error) {
     console.error('Error updating consent:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -208,8 +239,15 @@ router.get('/dashboard', auth, async (req, res) => {
       data: {
         totalSaved: savings.total_saved,
         target: savings.vaccine_price,
+        vaccinePrice: savings.vaccine_price,
+        dailySavingsTarget: savings.daily_savings_target,
         progress: (savings.total_saved / savings.vaccine_price) * 100,
         deposits: savings.deposits,
+        fullName: savings.full_name,
+        age: savings.age,
+        gender: savings.gender,
+        parentPhone: savings.parent_phone,
+        vaccineType: savings.vaccine_type,
       },
     });
   } catch (error) {
@@ -267,9 +305,37 @@ router.get('/check-status', auth, async (req, res) => {
       where: { user_id: userId },
     });
 
+    // Determine completeness of the savings flow.
+    // Steps: 1) Intake (exists) 2) Consent acknowledged 3) Bank setup/profile approved 4) Target configured
+    let isComplete = false;
+    let nextStep = 1;
+
+    if (!savings) {
+      isComplete = false;
+      nextStep = 1;
+    } else {
+      const consentOk = !!savings.consent_acknowledged;
+      const bankOk = savings.bank_account_status === 'ready' || savings.profile_status === 'approved';
+      const targetOk = !!savings.vaccine_price && !!savings.daily_savings_target && savings.vaccine_price > 0 && savings.daily_savings_target > 0;
+
+      if (!consentOk) {
+        nextStep = 2;
+      } else if (!bankOk) {
+        nextStep = 3;
+      } else if (!targetOk) {
+        nextStep = 4;
+      } else {
+        nextStep = 4;
+      }
+
+      isComplete = consentOk && bankOk && targetOk;
+    }
+
     res.json({
       success: true,
       hasVaccineSavings: !!savings,
+      isComplete,
+      nextStep,
       status: savings?.profile_status || null,
     });
   } catch (error) {

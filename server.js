@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const { testPrismaConnection } = require('./config/db');
 
@@ -16,6 +17,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Serve uploaded documents (doctor recommendations, tickets, etc.)
+app.use('/documents', express.static(path.join(__dirname, 'public', 'documents')));
 
 // Initialize database connections
 const initializeDatabases = async () => {

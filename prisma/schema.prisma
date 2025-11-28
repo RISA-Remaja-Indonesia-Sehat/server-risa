@@ -317,6 +317,7 @@ model Vaccine_Savings {
   dose1_date            DateTime?
   dose2_date            DateTime?
   dose3_date            DateTime?
+  doctor_recommendation_url String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
   user                  Users     @relation(fields: [user_id], references: [id])
